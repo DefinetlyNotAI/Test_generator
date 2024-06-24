@@ -36,11 +36,9 @@ def validate_difficulty_distribution(exam, hard_percentage, medium_percentage, e
     medium_ratio = sum(1 for d in difficulties if d == 'Medium') / len(difficulties)
     easy_ratio = sum(1 for d in difficulties if d == 'Easy') / len(difficulties)
 
-    result = abs(hard_ratio - hard_percentage / 100) <= 0.01 and \
-             abs(medium_ratio - medium_percentage / 100) <= 0.01 and \
-             abs(easy_ratio - easy_percentage / 100) <= 0.01
+    result = abs(hard_ratio - hard_percentage / 100) <= 0.01 and abs(
+        medium_ratio - medium_percentage / 100) <= 0.01 and abs(easy_ratio - easy_percentage / 100) <= 0.01
 
-    # print(f"Validation result: {result}")
     return result
 
 
@@ -138,9 +136,8 @@ def initialize_and_validate_config():
                     variables[var_name] = int(var_value)
 
         # Perform validation checks
-        total_percentages = variables.get('hard_percentage', 0) + \
-                            variables.get('medium_percentage', 0) + \
-                            variables.get('easy_percentage', 0)
+        total_percentages = variables.get('hard_percentage', 0) + variables.get('medium_percentage', 0) + variables.get(
+            'easy_percentage', 0)
 
         if total_percentages != 100:
             raise ValueError("The sum of hard_percentage, medium_percentage, and easy_percentage must equal 100.")
