@@ -1,0 +1,5 @@
+Randomly construct an exam:
+	Input total questions,
+	Validate 3 different titles must be there
+	80% of questions must be medium, 10% hard and easy
+	points should never go over or under 100
