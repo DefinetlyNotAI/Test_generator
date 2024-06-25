@@ -235,8 +235,8 @@ try:
     thread = threading.Thread(target=main)
     thread.start()
 
-    # Wait for 10 seconds or until the thread completes
-    thread.join(timeout=10)
+    # Wait for 20 seconds or until the thread completes
+    thread.join(timeout=20)
 
     # Check if the thread has finished within the timeout period
     if thread.is_alive():
