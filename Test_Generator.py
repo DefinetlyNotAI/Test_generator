@@ -1,107 +1,128 @@
+import csv
+from configparser import ConfigParser
 import random
-import pandas as pd
 
 
-def read_config_file():
-    config = {}
-    with open('.config', 'r') as file:
-        for line in file:
-            if '=' in line:
-                key, value = line.strip().split('=')
-                config[key] = int(value) if value.isdigit() else float(value)
-    return config
+# Function to read and validate the CSV file
+def read_csv(file_path):
+    questions = []
+    with open(file_path, mode='r', encoding='utf-8') as file:
+        reader = csv.reader(file)  # Changed to csv.reader for demonstration purposes
+        next(reader)  # Skip header row if present
+        for row in reader:
+            # Validate row
+            if not all(value.strip() for value in row):  # Use strip() to remove leading/trailing whitespace
+                raise ValueError("Empty value found in CSV.")
+            difficulty = row[2].strip()  # Directly access the third column (index 2) for difficulty
+            if difficulty not in ['Hard', 'Medium', 'Easy']:
+                raise ValueError(f"Invalid difficulty level at line {reader.line_num}: {difficulty}.")
+            try:
+                score = int(row[3].strip())  # Access the fourth column (index 3) for score
+            except ValueError:
+                raise ValueError(f"Invalid score format at line {reader.line_num}: {row[3]}.")
+
+            if not 0 <= score <= 100:
+                raise ValueError(f"Invalid score range at line {reader.line_num}: {score}.")
+
+            questions.append(row)
+    return questions
 
 
-def validate_config(config):
-    total_percentage = sum([config['hard_percentage'], config['medium_percentage'], config['easy_percentage']])
-    if not total_percentage == 100 or any(value <= 0 for value in config.values()):
-        raise ValueError(
-            "Configuration validation failed. Percentages must add up to 100 and all values must be greater than 0.")
+# Function to read and validate the config file
+def read_config(file_path):
+    config = ConfigParser()
+    config.read(file_path)
+
+    # Validate config values
+    sections = config.sections()
+    if len(sections) != 1:
+        raise ValueError("Config file must contain exactly one section.")
+    section = sections[0]
+    options = config.options(section)
+    required_options = ['questions_amount', 'minimum_titles', 'hard_percentage', 'medium_percentage', 'easy_percentage',
+                        'points']
+    missing_options = [option for option in required_options if option not in options]
+    if missing_options:
+        raise ValueError(f"Missing required options in config file: {missing_options}")
+
+    for option in required_options:
+        try:
+            value = int(config.get(section, option))
+            if option == 'questions_amount' and value > len(read_csv('Test.csv')):
+                raise ValueError(f"{option} exceeds the number of questions in the CSV file.")
+        except ValueError:
+            raise ValueError(f"Invalid value type for {option}: expected integer.")
+
+    # Ensure percentages add up to 100
+    percentages = [int(config.get(section, f'{d}_percentage')) for d in ('hard', 'medium', 'easy')]
+    if sum(percentages) != 100:
+        raise ValueError("Percentage values do not add up to 100.")
+
+    return {
+        'questions_amount': config.getint(section, 'questions_amount'),
+        'minimum_titles': config.getint(section, 'minimum_titles'),
+        'hard_percentage': config.getfloat(section, 'hard_percentage'),
+        'medium_percentage': config.getfloat(section, 'medium_percentage'),
+        'easy_percentage': config.getfloat(section, 'easy_percentage'),
+        'points': config.getint(section, 'points')
+    }
 
 
-def load_and_validate_csv(config, df):
-    required_columns = ['Questions', 'Question Type', 'Difficulty (Easy, Medium, Hard)', 'Score']
-    if not set(required_columns).issubset(df.columns):
-        raise ValueError("CSV file does not contain the required columns.")
+# Function to generate the exam
+def generate_exam(questions, config_data):
+    while True:
+        exam = []
+        total_points = 0
+        difficulty_ratios = {'Hard': config_data['hard_percentage'], 'Medium': config_data['medium_percentage'],
+                             'Easy': config_data['easy_percentage']}
+        title_questions_needed = min(config_data['minimum_titles'], config_data['questions_amount'])
 
-    if (df['Score'] < 0).any():
-        raise ValueError("CSV file contains negative scores.")
+        # First, ensure we have the minimum number of title questions
+        for _ in range(title_questions_needed):
+            if not questions:
+                raise ValueError("No questions available to generate the exam.")
+            selected_question_index = random.randint(0, len(questions) - 1)
+            selected_question = questions[selected_question_index]
+            if selected_question[0] == 'Title':  # Assuming the first column indicates the question type
+                exam.append(selected_question)
+                total_points += int(selected_question[3])
+                difficulty_ratios[selected_question[2]] -= 1
+                questions.pop(selected_question_index)  # Remove the selected question from the pool
 
-    questions_amount = config['questions_amount']
-    if len(df) < questions_amount:
-        raise ValueError(f"Not enough questions in the CSV file to meet the required amount ({questions_amount}).")
+        # After meeting the title questions requirement, fill the rest of the exam with other types of questions
+        while len(exam) < config_data['questions_amount']:
+            if not questions:
+                break  # Exit loop if no more questions are available
+            selected_question_index = random.randint(0, len(questions) - 1)
+            selected_question = questions[selected_question_index]
+            if selected_question not in exam:
+                exam.append(selected_question)
+                total_points += int(selected_question[3])
+                difficulty_ratios[selected_question[2]] -= 1
+                questions.pop(selected_question_index)  # Remove the selected question from the pool
 
-    return df
+        # Final checks
+        if total_points != config_data['points']:
+            continue  # Regenerate the exam if total points do not match the required points
+        if len(exam) < config_data['questions_amount']:
+            continue  # Regenerate the exam if it does not meet the size requirement
 
+        # If the exam passes all checks, break out of the loop
+        break
 
-def construct_exam(config, df):
-    # Assuming the DataFrame 'df' has columns 'Question', 'Score', and 'Difficulty (Easy, Medium, Hard)'
-
-    # Initialize selected questions list
-    selected_questions = []
-    difficulty_counts = {'Hard': 0, 'Medium': 0, 'Easy': 0}
-    total_score = 0
-
-    # Define difficulty weights based on their proportion in the dataset
-    difficulty_weights = {level: len(df[df['Difficulty (Easy, Medium, Hard)'] == level]) for level in
-                          ['Hard', 'Medium', 'Easy']}
-    total_weight = sum(difficulty_weights.values())
-
-    # Randomly select questions with a slight preference towards maintaining difficulty balance
-    for _ in range(len(df)):
-        # Choose a difficulty level based on its weight
-        chosen_difficulty = random.choices(['Hard', 'Medium', 'Easy'],
-                                           weights=[weight / total_weight for weight in difficulty_weights.values()],
-                                           k=1)[0]
-
-        # Filter questions by chosen difficulty
-        filtered_df = df[df['Difficulty (Easy, Medium, Hard)'] == chosen_difficulty]
-
-        # Select a random question from the filtered set
-        selected_question = random.choice(list(filtered_df.itertuples(index=False)))
-
-        # Add the selected question to the list
-        selected_questions.append(selected_question)
-
-        # Update difficulty count and total score
-        difficulty_counts[chosen_difficulty] += 1
-        total_score += selected_question.Score
-
-    # Normalize difficulty counts to reflect the proportion of questions selected
-    for difficulty in difficulty_counts.keys():
-        difficulty_counts[difficulty] = round(difficulty_counts[difficulty] / len(df) * 100)
-
-    return selected_questions, difficulty_counts, total_score
+    return exam, total_points, difficulty_ratios
 
 
-def main():
-    try:
-        config = read_config_file()
-        validate_config(config)
-        df = pd.read_csv('Test.csv')
-        df = load_and_validate_csv(config, df)
+# Main execution flow
+try:
+    questions = read_csv('Test.csv')
+    config_data = read_config('.config')
+    exam, total_points, difficulty_ratios = generate_exam(questions, config_data)
 
-        exam_questions, difficulty_distribution, total_score = construct_exam(config, df)
-
-        # Print exam questions
-        for i, question in enumerate(exam_questions, start=1):
-            print(
-                f"Question {i}: {getattr(question, 'Questions', '')} ({getattr(question, 'Question Type', '')}, {getattr(question, 'Difficulty (Easy, Medium, Hard)', '')}, Score: {getattr(question, 'Score', 0)})")
-
-        # Print statistics
-        print("\nExam Statistics:")
-        print(f"Total Questions: {len(exam_questions)}")
-        print(
-            f"Hard Questions: {difficulty_distribution['Hard']} ({round((difficulty_distribution['Hard'] / len(exam_questions)) * 100, 2)}%)")
-        print(
-            f"Medium Questions: {difficulty_distribution['Medium']} ({round((difficulty_distribution['Medium'] / len(exam_questions)) * 100, 2)}%)")
-        print(
-            f"Easy Questions: {difficulty_distribution['Easy']} ({round((difficulty_distribution['Easy'] / len(exam_questions)) * 100, 2)}%)")
-        print(f"Total Score: {total_score}")
-
-    except Exception as e:
-        print(f"An error occurred: {e}")
-
-
-if __name__ == "__main__":
-    main()
+    print(f"Exam Generated:\n{exam}\n")
+    print(f"Total Points: {total_points}")
+    print(f"Questions Answered: {len(exam)}")
+    print(
+        f"Difficulty Ratio: Hard: {difficulty_ratios['Hard']}%, Medium: {difficulty_ratios['Medium']}%, Easy: {difficulty_ratios['Easy']}%")
+except Exception as e:
+    print(str(e))
