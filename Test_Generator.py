@@ -1,6 +1,12 @@
+import threading
 import csv
-from configparser import ConfigParser
 import random
+from configparser import ConfigParser
+
+
+# Exception class for timeout
+class TimeoutException(Exception):
+    pass
 
 
 # Function to read and validate the CSV file
@@ -55,7 +61,7 @@ def read_config(file_path):
         'hard_percentage': config.getfloat(section, 'hard_percentage'),
         'medium_percentage': config.getfloat(section, 'medium_percentage'),
         'easy_percentage': config.getfloat(section, 'easy_percentage'),
-        'points': config.getint(section, 'points')
+        'points': config.getint(section, 'points'),
     }
 
 
@@ -128,5 +134,22 @@ def main():
         print("Error:", e)
 
 
-if __name__ == '__main__':
-    main()
+try:
+    # Start the program logic in a new thread
+    thread = threading.Thread(target=main)
+    thread.start()
+
+    # Wait for 10 seconds or until the thread completes
+    thread.join(timeout=3)
+
+    # Check if the thread has finished within the timeout period
+    if thread.is_alive():
+        # If the thread is still alive (i.e., hasn't finished), raise a TimeoutException
+        raise TimeoutException("Timeout - Mostly due to too strict rules or too little questions")
+
+except TimeoutException:
+    print("Timeout - Mostly due to too strict rules or too little questions")
+    exit(1)
+except Exception as e:
+    print(f"An unexpected error occurred: {e}")
+    exit(1)
