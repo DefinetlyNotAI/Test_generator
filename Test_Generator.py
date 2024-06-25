@@ -1,199 +1,97 @@
-import csv
-import glob
 import random
-from itertools import combinations
+import pandas as pd
 from tqdm import tqdm
 
 
-def generate_all_combinations(processed_data, min_questions):
-    all_combinations = []
-    # Wrap the outer loop with tqdm for progress visualization
-    for r in tqdm(range(min_questions, len(processed_data) + 1), desc="Generating combinations"):
-        # Wrap the inner loop with tqdm as well, nested under the outer loop's progress bar
-        for subset in tqdm(combinations(processed_data.values(), r), desc=f"Processing {r} questions"):
-            all_combinations.append(list(subset))
-    return all_combinations
+def read_config_file():
+    config = {}
+    with open('.config', 'r') as file:
+        for line in file:
+            if '=' in line:
+                key, value = line.strip().split('=')
+                config[key] = int(value) if value.isdigit() else float(value)
+    return config
 
 
-def validate_number_of_questions(exam, questions_amount):
-    num_questions = len(exam)
-    result = num_questions == questions_amount
-    return result
+def validate_config(config):
+    total_percentage = sum([config['hard_percentage'], config['medium_percentage'], config['easy_percentage']])
+    if not total_percentage == 100 or any(value <= 0 for value in config.values()):
+        raise ValueError(
+            "Configuration validation failed. Percentages must add up to 100 and all values must be greater than 0.")
 
 
-def validate_minimum_unique_titles(exam, minimum_titles):
-    unique_titles = set(q['Title Type'] for q in exam)
-    result = len(unique_titles) >= minimum_titles
-    return result
+def load_and_validate_csv(config, df):
+    required_columns = ['Questions', 'Question Type', 'Difficulty (Easy, Medium, Hard)', 'Score']
+    if not set(required_columns).issubset(df.columns):
+        raise ValueError("CSV file does not contain the required columns.")
+
+    if (df['Score'] < 0).any():
+        raise ValueError("CSV file contains negative scores.")
+
+    questions_amount = config['questions_amount']
+    if len(df) < questions_amount:
+        raise ValueError(f"Not enough questions in the CSV file to meet the required amount ({questions_amount}).")
+
+    return df
 
 
-def validate_difficulty_distribution(exam, hard_percentage, medium_percentage, easy_percentage):
-    difficulties = [q['Difficulty'] for q in exam]
-    if set(difficulties) != {'Easy', 'Medium', 'Hard'}:
-        return False
+def construct_exam(config, df):
+    questions_amount = config['questions_amount']
+    minimum_titles = config['minimum_titles']
+    max_points = config['max_points']
 
-    hard_ratio = sum(1 for d in difficulties if d == 'Hard') / len(difficulties)
-    medium_ratio = sum(1 for d in difficulties if d == 'Medium') / len(difficulties)
-    easy_ratio = sum(1 for d in difficulties if d == 'Easy') / len(difficulties)
+    difficulties = ['Hard', 'Medium', 'Easy']
+    difficulty_ratios = [config['hard_percentage'], config['medium_percentage'], config['easy_percentage']]
 
-    result = abs(hard_ratio - hard_percentage / 100) <= 0.01 and abs(
-        medium_ratio - medium_percentage / 100) <= 0.01 and abs(easy_ratio - easy_percentage / 100) <= 0.01
+    selected_questions = []
+    for difficulty, ratio in zip(difficulties, difficulty_ratios):
+        target_count = int(ratio * questions_amount / 100)
+        filtered_df = df[df['Difficulty (Easy, Medium, Hard)'] == difficulty]
 
-    return result
+        selected = random.sample(list(filtered_df.itertuples(index=False)), target_count)
+        selected_questions.extend(selected)
+
+    unique_selected_questions = []
+    seen_titles = set()
+    for question in selected_questions:
+        if getattr(question, 'Questions', None) not in seen_titles:
+            unique_selected_questions.append(question)
+            seen_titles.add(getattr(question, 'Questions', None))
+
+    total_attempts = questions_amount // 2  # Rough estimate for simplicity
+    for _ in tqdm(range(total_attempts), desc="Constructing Exam"):
+        additional_selection = random.sample(list(df.itertuples(index=False)),
+                                             questions_amount - len(unique_selected_questions))
+        additional_unique_questions = [q for q in additional_selection if
+                                       getattr(q, 'Questions', None) not in seen_titles]
+
+        if len(additional_unique_questions) > 0:
+            unique_selected_questions.extend(additional_unique_questions)
+            seen_titles.update({getattr(q, 'Questions', None) for q in additional_unique_questions})
+
+        if len(unique_selected_questions) >= minimum_titles and sum(
+                getattr(q, 'Score', 0) for q in unique_selected_questions) == max_points:
+            break
+
+    return unique_selected_questions
 
 
-def validate_total_points(exam, max_points):
-    total_score = sum(q['Score'] for q in exam)
-    result = total_score == max_points
-    return result
-
-
-def select_random_exam(valid_exams):
-    print("Selecting a random exam...")
-    selected_exam = random.choice(valid_exams)
-    print("Selected Exam:")
-    for question in selected_exam:
-        print(question)
-    return selected_exam
-
-
-def read_and_process_csv():
-    # Pattern to match CSV files in the current directory
-    csv_files = glob.glob('./*.csv')
-
-    if not csv_files:
-        print("No CSV files found in the current directory.")
-        return "\nAn error occurred, failed to generate questions"
-
-    # Assuming there's only one CSV file or processing the first one found
-    file_name = csv_files[0]
-
-    # Dictionary to hold the processed data
-    data_dict = {}
-
+def main():
     try:
-        with open(file_name, mode='r', newline='', encoding='utf-8') as file:
-            reader = csv.reader(file)
-            # Skip the header row
-            next(reader)
+        config = read_config_file()
+        validate_config(config)
+        df = pd.read_csv('Test.csv')
+        df = load_and_validate_csv(config, df)
 
-            for index, row in enumerate(reader, start=1):
-                # Check if row has exactly 4 values
-                if len(row) != 4:
-                    print(f"Error: CSV file contradicts itself at line {index}. Expected 4 values per row.")
-                    return "\nAn error occurred, failed to generate questions"
+        exam = construct_exam(config, df)
 
-                question, title_type, difficulty, score = row
-
-                # Validate Difficulty value
-                if difficulty not in ['Easy', 'Medium', 'Hard']:
-                    print(
-                        f"Error: Invalid Difficulty value '{difficulty}' at line {index}. Allowed values are Easy, Medium, Hard.")
-                    return "\nAn error occurred, failed to generate questions"
-
-                # Validate Score value
-                try:
-                    score = int(score)
-                    if score < 0 or score > 100:
-                        print(f"Error: Score value '{score}' at line {index} must be between 0 and 100.")
-                        return "\nAn error occurred, failed to generate questions"
-                except ValueError:
-                    print(f"Error: CSV file contradicts itself at line {index}. Score must be a number.")
-                    return "\nAn error occurred, failed to generate questions"
-
-                # Create dictionary entry
-                data_dict[question] = {'Question': question, 'Title Type': title_type, 'Difficulty': difficulty,
-                                       'Score': score}
-
-    except FileNotFoundError:
-        print(f"Error: The file '{file_name}' does not exist in the current directory.")
-        return "\nAn error occurred, failed to generate questions"
+        # Output the exam
+        for i, question in enumerate(exam, start=1):
+            print(
+                f"Question {i}: {getattr(question, 'Questions', '')} ({getattr(question, 'Question Type', '')}, {getattr(question, 'Difficulty (Easy, Medium, Hard)', '')}, Score: {getattr(question, 'Score', 0)})")
     except Exception as e:
-        print(f"An unexpected error occurred: {e}")
-        return "\nAn error occurred, failed to generate questions"
-
-    print()
-    return data_dict
+        print(f"An error occurred: {e}")
 
 
-def initialize_and_validate_config():
-    variables = {}
-
-    try:
-        # Open the.config file in read mode
-        with open('.config', 'r') as file:
-            # Iterate through each line in the file
-            for line in file:
-                # Strip whitespace and check if the line is not empty
-                line = line.strip()
-                if line:
-                    # Split the line into variable name and value
-                    var_name, var_value = line.split('=', 1)  # Split at the first occurrence of '='
-                    # Remove leading/trailing whitespace from variable name and value
-                    var_name = var_name.strip()
-                    var_value = var_value.strip()
-                    # Convert value to integer and store in the dictionary
-                    variables[var_name] = int(var_value)
-
-        # Perform validation checks
-        total_percentages = variables.get('hard_percentage', 0) + variables.get('medium_percentage', 0) + variables.get(
-            'easy_percentage', 0)
-
-        if total_percentages != 100:
-            raise ValueError("The sum of hard_percentage, medium_percentage, and easy_percentage must equal 100.")
-
-        return variables
-    except FileNotFoundError:
-        print("Error: The .config file does not exist in the current directory.")
-        return None
-    except ValueError as ve:
-        print(f"Validation Error: {ve}")
-        return None
-    except Exception as e:
-        print(f"An unexpected error occurred: {e}")
-        return None
-
-
-def generate_valid_exams(processed_data, questions_amount, minimum_titles, hard_percentage, medium_percentage,
-                         easy_percentage, max_points):
-    all_combinations = generate_all_combinations(processed_data, minimum_titles)
-    valid_exams = []
-
-    for exam in all_combinations:
-
-        if not validate_number_of_questions(exam, questions_amount):
-            continue
-
-        if not validate_minimum_unique_titles(exam, minimum_titles):
-            continue
-
-        if not validate_difficulty_distribution(exam, hard_percentage, medium_percentage, easy_percentage):
-            continue
-
-        if validate_total_points(exam, max_points):
-            valid_exams.append(exam)
-
-    print(f"Number of valid exams: {len(valid_exams)}")
-    return valid_exams
-
-
-# Example usage
 if __name__ == "__main__":
-    processed_data = read_and_process_csv()
-
-    config_variables = initialize_and_validate_config()
-    if config_variables is not None:
-        questions_amount = config_variables.get('questions_amount', 10)
-        minimum_titles = config_variables.get('minimum_titles', 3)
-        hard_percentage = config_variables.get('hard_percentage', 10)
-        medium_percentage = config_variables.get('medium_percentage', 80)
-        easy_percentage = config_variables.get('easy_percentage', 10)
-        max_points = config_variables.get('max_points', 100)
-
-    valid_exams = generate_valid_exams(processed_data, questions_amount, minimum_titles, hard_percentage,
-                                       medium_percentage, easy_percentage, max_points)
-    if valid_exams:
-        selected_exam = select_random_exam(valid_exams)
-        print("Selected Exam:")
-        for question in selected_exam:
-            print(question)
+    main()
