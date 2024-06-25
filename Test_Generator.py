@@ -7,23 +7,20 @@ import random
 def read_csv(file_path):
     questions = []
     with open(file_path, mode='r', encoding='utf-8') as file:
-        reader = csv.reader(file)  # Changed to csv.reader for demonstration purposes
+        reader = csv.reader(file)
         next(reader)  # Skip header row if present
         for row in reader:
-            # Validate row
-            if not all(value.strip() for value in row):  # Use strip() to remove leading/trailing whitespace
+            if not all(value.strip() for value in row):
                 raise ValueError("Empty value found in CSV.")
-            difficulty = row[2].strip()  # Directly access the third column (index 2) for difficulty
+            difficulty = row[2].strip()
             if difficulty not in ['Hard', 'Medium', 'Easy']:
                 raise ValueError(f"Invalid difficulty level at line {reader.line_num}: {difficulty}.")
             try:
-                score = int(row[3].strip())  # Access the fourth column (index 3) for score
+                score = int(row[3].strip())
             except ValueError:
                 raise ValueError(f"Invalid score format at line {reader.line_num}: {row[3]}.")
-
             if not 0 <= score <= 100:
                 raise ValueError(f"Invalid score range at line {reader.line_num}: {score}.")
-
             questions.append(row)
     return questions
 
@@ -32,8 +29,6 @@ def read_csv(file_path):
 def read_config(file_path):
     config = ConfigParser()
     config.read(file_path)
-
-    # Validate config values
     sections = config.sections()
     if len(sections) != 1:
         raise ValueError("Config file must contain exactly one section.")
@@ -44,7 +39,6 @@ def read_config(file_path):
     missing_options = [option for option in required_options if option not in options]
     if missing_options:
         raise ValueError(f"Missing required options in config file: {missing_options}")
-
     for option in required_options:
         try:
             value = int(config.get(section, option))
@@ -52,12 +46,9 @@ def read_config(file_path):
                 raise ValueError(f"{option} exceeds the number of questions in the CSV file.")
         except ValueError:
             raise ValueError(f"Invalid value type for {option}: expected integer.")
-
-    # Ensure percentages add up to 100
     percentages = [int(config.get(section, f'{d}_percentage')) for d in ('hard', 'medium', 'easy')]
     if sum(percentages) != 100:
         raise ValueError("Percentage values do not add up to 100.")
-
     return {
         'questions_amount': config.getint(section, 'questions_amount'),
         'minimum_titles': config.getint(section, 'minimum_titles'),
@@ -71,26 +62,18 @@ def read_config(file_path):
 # Function to generate the exam
 def generate_exam(questions, config_data):
     while True:
+        if not questions:
+            # Retry if a questions' list is empty
+            questions = read_csv('Test.csv')
+            if not questions:
+                raise ValueError("Failed to load questions from CSV file.")
+
         exam = []
         total_points = 0
-        difficulty_ratios = {'Hard': config_data['hard_percentage'], 'Medium': config_data['medium_percentage'],
-                             'Easy': config_data['easy_percentage']}
-        title_questions_needed = min(config_data['minimum_titles'], config_data['questions_amount'])
+        difficulty_counts = {'Hard': 0, 'Medium': 0, 'Easy': 0}
 
-        # First, ensure we have the minimum number of title questions
-        for _ in range(title_questions_needed):
-            if not questions:
-                raise ValueError("No questions available to generate the exam.")
-            selected_question_index = random.randint(0, len(questions) - 1)
-            selected_question = questions[selected_question_index]
-            if selected_question[0] == 'Title':  # Assuming the first column indicates the question type
-                exam.append(selected_question)
-                total_points += int(selected_question[3])
-                difficulty_ratios[selected_question[2]] -= 1
-                questions.pop(selected_question_index)  # Remove the selected question from the pool
-
-        # After meeting the title questions requirement, fill the rest of the exam with other types of questions
-        while len(exam) < config_data['questions_amount']:
+        # Generate the exam
+        for _ in range(config_data['questions_amount']):
             if not questions:
                 break  # Exit loop if no more questions are available
             selected_question_index = random.randint(0, len(questions) - 1)
@@ -98,8 +81,23 @@ def generate_exam(questions, config_data):
             if selected_question not in exam:
                 exam.append(selected_question)
                 total_points += int(selected_question[3])
-                difficulty_ratios[selected_question[2]] -= 1
+                difficulty_counts[selected_question[2]] += 1
                 questions.pop(selected_question_index)  # Remove the selected question from the pool
+
+        # Calculate difficulty ratios based on the actual distribution of questions in the exam
+        total_difficulties = sum(difficulty_counts.values())
+        if total_difficulties == 0:  # Check for division by zero
+            return None, total_points, {}  # Return early with empty ratios if no questions were added
+
+        difficulty_ratios = {k: v / total_difficulties * 100 for k, v in difficulty_counts.items()}
+
+        # Validation check against config values
+        if abs(difficulty_ratios['Hard'] - config_data['hard_percentage']) > 1:  # Allow small deviations due to randomness
+            continue  # Regenerate the exam if the hard ratio doesn't match closely
+        if abs(difficulty_ratios['Medium'] - config_data['medium_percentage']) > 1:  # Allow small deviations due to randomness
+            continue  # Regenerate the exam if the medium ratio doesn't match closely
+        if abs(difficulty_ratios['Easy'] - config_data['easy_percentage']) > 1:  # Allow small deviations due to randomness
+            continue  # Regenerate the exam if the easy ratio doesn't match closely
 
         # Final checks
         if total_points != config_data['points']:
@@ -107,22 +105,28 @@ def generate_exam(questions, config_data):
         if len(exam) < config_data['questions_amount']:
             continue  # Regenerate the exam if it does not meet the size requirement
 
-        # If the exam passes all checks, break out of the loop
+        # If the exam passes all checks, including the difficulty ratio validation, break out of the loop
         break
 
     return exam, total_points, difficulty_ratios
 
 
 # Main execution flow
-try:
-    questions = read_csv('Test.csv')
-    config_data = read_config('.config')
-    exam, total_points, difficulty_ratios = generate_exam(questions, config_data)
+def main():
+    try:
+        # Read the CSV file and validate the config file
+        questions = read_csv('Test.csv')
+        config_data = read_config('.config')
+        exam, total_points, difficulty_ratios = generate_exam(questions, config_data)
 
-    print(f"Exam Generated:\n{exam}\n")
-    print(f"Total Points: {total_points}")
-    print(f"Questions Answered: {len(exam)}")
-    print(
-        f"Difficulty Ratio: Hard: {difficulty_ratios['Hard']}%, Medium: {difficulty_ratios['Medium']}%, Easy: {difficulty_ratios['Easy']}%")
-except Exception as e:
-    print(str(e))
+        print(f"Exam Generated:\n{exam}\n")
+        print(f"Total Points: {total_points}")
+        print(f"Questions Answered: {len(exam)}")
+        print(
+            f"Difficulty Ratio: Hard: {difficulty_ratios['Hard']}%, Medium: {difficulty_ratios['Medium']}%, Easy: {difficulty_ratios['Easy']}%")
+    except Exception as e:
+        print("Error:", e)
+
+
+if __name__ == '__main__':
+    main()
