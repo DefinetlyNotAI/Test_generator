@@ -20,7 +20,7 @@
 <!-- Go over all the following points, and put an `x` in all the boxes that apply. -->
 <!-- If you're unsure about any of these, don't hesitate to ask. We're here to help! -->
 
-- [ ] I have read the [contributing guidelines](https://github.com/twbs/Test-generator/blob/main/.github/CONTRIBUTING.md)
+- [ ] I have read the [contributing guidelines](https://github.com/DefinetlyNotAI/Test-generator/blob/main/.github/CONTRIBUTING.md)
 - [ ] My change introduces changes to the documentation
 - [ ] I have added tests to cover my changes
 - [ ] All new and existing tests passed
