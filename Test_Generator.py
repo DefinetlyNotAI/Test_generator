@@ -76,6 +76,7 @@ def generate_exam(questions, config_data):
 
         exam = []
         total_points = 0
+        total_titles = []
         difficulty_counts = {'Hard': 0, 'Medium': 0, 'Easy': 0}
 
         # Generate the exam
@@ -89,6 +90,10 @@ def generate_exam(questions, config_data):
                 total_points += int(selected_question[3])
                 difficulty_counts[selected_question[2]] += 1
                 questions.pop(selected_question_index)  # Remove the selected question from the pool
+                title_value = selected_question[1]
+                if title_value not in total_titles:
+                    # Append the value if it doesn't exist
+                    total_titles.append(title_value)
 
         # Calculate difficulty ratios based on the actual distribution of questions in the exam
         total_difficulties = sum(difficulty_counts.values())
@@ -110,11 +115,13 @@ def generate_exam(questions, config_data):
             continue  # Regenerate the exam if total points do not match the required points
         if len(exam) < config_data['questions_amount']:
             continue  # Regenerate the exam if it does not meet the size requirement
+        if len(total_titles) < config_data['minimum_titles']:
+            continue  # Regenerate the exam if it does not meet the title requirement
 
         # If the exam passes all checks, including the difficulty ratio validation, break out of the loop
         break
 
-    return exam, total_points, difficulty_ratios
+    return exam, total_points, difficulty_ratios, total_titles
 
 
 # Main execution flow
@@ -123,11 +130,12 @@ def main():
         # Read the CSV file and validate the config file
         questions = read_csv('Test.csv')
         config_data = read_config('.config')
-        exam, total_points, difficulty_ratios = generate_exam(questions, config_data)
+        exam, total_points, difficulty_ratios, total_titles = generate_exam(questions, config_data)
 
         print(f"Exam Generated:\n{exam}\n")
         print(f"Total Points: {total_points}")
         print(f"Questions Answered: {len(exam)}")
+        print(f"Total Titles Used: {len(total_titles)}")
         print(
             f"Difficulty Ratio: Hard: {difficulty_ratios['Hard']}%, Medium: {difficulty_ratios['Medium']}%, Easy: {difficulty_ratios['Easy']}%")
     except Exception as e:
@@ -145,10 +153,10 @@ try:
     # Check if the thread has finished within the timeout period
     if thread.is_alive():
         # If the thread is still alive (i.e., hasn't finished), raise a TimeoutException
-        raise TimeoutException("Timeout - Mostly due to too strict rules or too little questions")
+        raise TimeoutException("Timeout - Mostly due to too strict rules or too little questions were given in the CVS file.")
 
-except TimeoutException:
-    print("Timeout - Mostly due to too strict rules or too little questions")
+except TimeoutException as e:
+    print("Timeout - Mostly due to too strict rules or too little questions were given in the CVS file.")
     exit(1)
 except Exception as e:
     print(f"An unexpected error occurred: {e}")
