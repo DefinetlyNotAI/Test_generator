@@ -1,6 +1,5 @@
 import random
 import pandas as pd
-from tqdm import tqdm
 
 
 def read_config_file():
@@ -36,44 +35,43 @@ def load_and_validate_csv(config, df):
 
 
 def construct_exam(config, df):
-    questions_amount = config['questions_amount']
-    minimum_titles = config['minimum_titles']
-    max_points = config['max_points']
+    # Assuming the DataFrame 'df' has columns 'Question', 'Score', and 'Difficulty (Easy, Medium, Hard)'
 
-    difficulties = ['Hard', 'Medium', 'Easy']
-    difficulty_ratios = [config['hard_percentage'], config['medium_percentage'], config['easy_percentage']]
-
+    # Initialize selected questions list
     selected_questions = []
-    for difficulty, ratio in zip(difficulties, difficulty_ratios):
-        target_count = int(ratio * questions_amount / 100)
-        filtered_df = df[df['Difficulty (Easy, Medium, Hard)'] == difficulty]
+    difficulty_counts = {'Hard': 0, 'Medium': 0, 'Easy': 0}
+    total_score = 0
 
-        selected = random.sample(list(filtered_df.itertuples(index=False)), target_count)
-        selected_questions.extend(selected)
+    # Define difficulty weights based on their proportion in the dataset
+    difficulty_weights = {level: len(df[df['Difficulty (Easy, Medium, Hard)'] == level]) for level in
+                          ['Hard', 'Medium', 'Easy']}
+    total_weight = sum(difficulty_weights.values())
 
-    unique_selected_questions = []
-    seen_titles = set()
-    for question in selected_questions:
-        if getattr(question, 'Questions', None) not in seen_titles:
-            unique_selected_questions.append(question)
-            seen_titles.add(getattr(question, 'Questions', None))
+    # Randomly select questions with a slight preference towards maintaining difficulty balance
+    for _ in range(len(df)):
+        # Choose a difficulty level based on its weight
+        chosen_difficulty = random.choices(['Hard', 'Medium', 'Easy'],
+                                           weights=[weight / total_weight for weight in difficulty_weights.values()],
+                                           k=1)[0]
 
-    total_attempts = questions_amount // 2  # Rough estimate for simplicity
-    for _ in tqdm(range(total_attempts), desc="Constructing Exam"):
-        additional_selection = random.sample(list(df.itertuples(index=False)),
-                                             questions_amount - len(unique_selected_questions))
-        additional_unique_questions = [q for q in additional_selection if
-                                       getattr(q, 'Questions', None) not in seen_titles]
+        # Filter questions by chosen difficulty
+        filtered_df = df[df['Difficulty (Easy, Medium, Hard)'] == chosen_difficulty]
 
-        if len(additional_unique_questions) > 0:
-            unique_selected_questions.extend(additional_unique_questions)
-            seen_titles.update({getattr(q, 'Questions', None) for q in additional_unique_questions})
+        # Select a random question from the filtered set
+        selected_question = random.choice(list(filtered_df.itertuples(index=False)))
 
-        if len(unique_selected_questions) >= minimum_titles and sum(
-                getattr(q, 'Score', 0) for q in unique_selected_questions) == max_points:
-            break
+        # Add the selected question to the list
+        selected_questions.append(selected_question)
 
-    return unique_selected_questions
+        # Update difficulty count and total score
+        difficulty_counts[chosen_difficulty] += 1
+        total_score += selected_question.Score
+
+    # Normalize difficulty counts to reflect the proportion of questions selected
+    for difficulty in difficulty_counts.keys():
+        difficulty_counts[difficulty] = round(difficulty_counts[difficulty] / len(df) * 100)
+
+    return selected_questions, difficulty_counts, total_score
 
 
 def main():
@@ -83,12 +81,24 @@ def main():
         df = pd.read_csv('Test.csv')
         df = load_and_validate_csv(config, df)
 
-        exam = construct_exam(config, df)
+        exam_questions, difficulty_distribution, total_score = construct_exam(config, df)
 
-        # Output the exam
-        for i, question in enumerate(exam, start=1):
+        # Print exam questions
+        for i, question in enumerate(exam_questions, start=1):
             print(
                 f"Question {i}: {getattr(question, 'Questions', '')} ({getattr(question, 'Question Type', '')}, {getattr(question, 'Difficulty (Easy, Medium, Hard)', '')}, Score: {getattr(question, 'Score', 0)})")
+
+        # Print statistics
+        print("\nExam Statistics:")
+        print(f"Total Questions: {len(exam_questions)}")
+        print(
+            f"Hard Questions: {difficulty_distribution['Hard']} ({round((difficulty_distribution['Hard'] / len(exam_questions)) * 100, 2)}%)")
+        print(
+            f"Medium Questions: {difficulty_distribution['Medium']} ({round((difficulty_distribution['Medium'] / len(exam_questions)) * 100, 2)}%)")
+        print(
+            f"Easy Questions: {difficulty_distribution['Easy']} ({round((difficulty_distribution['Easy'] / len(exam_questions)) * 100, 2)}%)")
+        print(f"Total Score: {total_score}")
+
     except Exception as e:
         print(f"An error occurred: {e}")
 
