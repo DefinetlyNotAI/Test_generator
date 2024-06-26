@@ -5,10 +5,6 @@ import random
 from configparser import ConfigParser
 
 
-# Global variables for either creating exam with or without debugging in the txt file.
-debug = True
-
-
 # Exception class for timeout
 class TimeoutException(Exception):
     pass
@@ -67,6 +63,7 @@ def read_config(file_path):
             - 'medium_percentage' (float): The percentage of medium difficulty questions.
             - 'easy_percentage' (float): The percentage of easy difficulty questions.
             - 'points' (int): The points awarded for each question.
+            - 'debug' (bool): Whether to print debug messages or not.
 
     Raises:
         ValueError: If the configuration file does not contain exactly one section.
@@ -74,6 +71,8 @@ def read_config(file_path):
         ValueError: If the value type for any of the required options is not an integer.
         ValueError: If the sum of the percentage values does not add up to 100.
         ValueError: If the 'questions_amount' exceeds the number of questions in the CSV file.
+        ValueError: If the 'points' value is not an integer.
+        ValueError: If the 'debug' value is not a boolean.
     """
     config = ConfigParser()
     config.read(file_path)
@@ -83,7 +82,7 @@ def read_config(file_path):
     section = sections[0]
     options = config.options(section)
     required_options = ['questions_amount', 'minimum_titles', 'hard_percentage', 'medium_percentage', 'easy_percentage',
-                        'points']
+                        'points', 'debug']
     missing_options = [option for option in required_options if option not in options]
     if missing_options:
         raise ValueError(f"Missing required options in config file: {missing_options}")
@@ -104,6 +103,7 @@ def read_config(file_path):
         'medium_percentage': config.getfloat(section, 'medium_percentage'),
         'easy_percentage': config.getfloat(section, 'easy_percentage'),
         'points': config.getint(section, 'points'),
+        'debug': config.getint(section, 'debug')
     }
 
 
@@ -221,8 +221,8 @@ def main():
 
         with open('Exam.txt', 'w') as file:
             # Write the data to the file
-            if debug:
-                file.write("Debug mode, set in the code head in variable debug = 1.\n\n")
+            if config_data['debug'] == 1:
+                file.write("Debug mode is on.\n\n")
                 file.write("Question            Type: Hard/Medium/Easy      Difficulty: Hard/Medium/Easy                                               [Points]\n")
                 for sublist in exam:
                     file.write(f"{sublist[0]}            Type: {sublist[1]}      Difficulty: {sublist[2]}                                               [{sublist[3]}]\n")
