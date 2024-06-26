@@ -4,6 +4,8 @@ import csv
 import random
 from configparser import ConfigParser
 
+
+# Global variables for either creating exam with or without debugging in the txt file.
 debug = True
 
 
