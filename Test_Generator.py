@@ -4,6 +4,8 @@ import csv
 import random
 from configparser import ConfigParser
 
+debug = True
+
 
 # Exception class for timeout
 class TimeoutException(Exception):
@@ -217,8 +219,15 @@ def main():
 
         with open('Exam.txt', 'w') as file:
             # Write the data to the file
-            for sublist in exam:
-                file.write(f"{sublist[0]}                                                 [{sublist[3]}]\n")
+            if debug:
+                file.write("Debug mode, set in the code head in variable debug = 1.\n\n")
+                file.write("Question            Type: Hard/Medium/Easy      Difficulty: Hard/Medium/Easy                                               [Points]\n")
+                for sublist in exam:
+                    file.write(f"{sublist[0]}            Type: {sublist[1]}      Difficulty: {sublist[2]}                                               [{sublist[3]}]\n")
+            else:
+                for sublist in exam:
+                    file.write(f"{sublist[0]}                                                                                                           [{sublist[3]}]\n")
+            file.write(f"Total exam is out of {config_data['points']} points.\n\n")
 
         print(f"\nExam Generated and saved to Exam.txt")
         print(f"\nTotal Points in exam: {total_points}")
