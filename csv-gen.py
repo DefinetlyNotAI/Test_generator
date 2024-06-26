@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # CSV Generator for Exam Maker Testing or Debugging.
-# Not for production use.
+# Not for consumer use.
 
 import csv
 import random
@@ -10,7 +10,7 @@ import os
 
 # Function to generate scores with a preference for smaller numbers
 def generate_score():
-    return random.randint(1, 50)  # Prefer smaller numbers
+    return random.randint(1, 2)  # Prefer smaller numbers
 
 
 # Generate questions from q0001 to q9999
