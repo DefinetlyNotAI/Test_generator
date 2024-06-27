@@ -1,23 +1,23 @@
-TODO 2) Make the exam a excel sheet NOT txt DONE
+2) Make the exam an Excel sheet NOT txt
 
-TODO 3) Add a exclusion database, includes ALL non-needed title types
+TODO 3) Add an exclusion database, includes ALL non-needed title types
 
 
-TODO 4) Make it cloud based aka online via google drive,
+TODO 4) Make it cloud based aka online via Google drive,
     	API key (The key to communicate with nirt's servers)
 	
 
-TODO 4.2)	Nirts servers
+TODO 4.1)	Nirts servers
 	Request Exam Creation (API)
 		Send to my GitHub pages a request to start exam generation, data to include
  			Name (will be saved as the database name containing all required info)
 			Users password (for identification purposes)
 			.config file
 		Verify name with password
-		If database doesn't exist create one (step 3)
+		If database doesn't exist, create one (step 3)
 			Create a unique exam and send it back to the website
 		If database exists
-			Create a exam, with excluded titles removed and send it back to the website
+			Create an exam, with excluded titles removed and send it back to the website
 
 			
 

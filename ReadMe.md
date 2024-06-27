@@ -38,8 +38,33 @@ Finally, you can clone into the project repository and run the script by executi
 ## Usage
 
 1. Place your `Test.csv` file in the project directory, containing your exam questions formatted correctly.
-2. Create a configuration file (`.config` or `config.ini`) in the same directory, specifying your desired exam parameters.
+2. Create a configuration file (`.config`) in the same directory, specifying your desired exam parameters.
 3. Run the script. The generated exam will be saved as `Exam.txt`.
+
+For better results, you can make sure the config file matches the first bunch of questions,
+this insures to timeout, AND still generates random questions.
+
+### Config File Format
+
+The config file should be formatted as follows:
+```
+[Config-Exam]
+questions_amount=6
+minimum_titles=3
+hard=2
+medium=1
+easy=3
+points=10
+debug=0
+```
+
+Where `questions_amount` is how many questions you want,
+`minimum_titles` is how many titles you want MINIMUM,
+`hard`,`medium` and `easy` is how many questions should be from each,
+and finally `points` is how much the total score of the exam should equal to,
+and `debug` is if you want extra parameters to be shown in the exam `0` being False, and `1` being true.
+
+All values must be integers and make sense.
 
 ## Contributing
 

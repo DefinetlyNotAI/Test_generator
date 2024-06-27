@@ -62,18 +62,16 @@ def read_config(file_path):
         dict: A dictionary containing the parsed configuration data.
             - 'questions_amount' (int): The number of questions to generate.
             - 'minimum_titles' (int): The minimum number of titles to include in the exam.
-            - 'hard_percentage' (float): The percentage of hard difficulty questions.
-            - 'medium_percentage' (float): The percentage of medium difficulty questions.
-            - 'easy_percentage' (float): The percentage of easy difficulty questions.
+            - 'hard' (int): The number of hard difficulty questions.
+            - 'medium' (int): The number of medium difficulty questions.
+            - 'easy' (int): The number of easy difficulty questions.
             - 'points' (int): The points awarded for each question.
             - 'debug' (bool): Whether to print debug messages or not.
 
     Raises:
         ValueError: If the configuration file does not contain exactly one section.
         ValueError: If any of the required options are missing in the configuration file.
-        ValueError: If the value type for any of the required options is not an integer.
-        ValueError: If the sum of the percentage values does not add up to 100.
-        ValueError: If the 'questions_amount' exceeds the number of questions in the CSV file.
+        ValueError: If the sum of the difficulty levels does not equal the total questions amount.
         ValueError: If the 'points' value is not an integer.
         ValueError: If the 'debug' value is not a boolean.
     """
@@ -84,29 +82,27 @@ def read_config(file_path):
         raise ValueError("Config file must contain exactly one section.")
     section = sections[0]
     options = config.options(section)
-    required_options = ['questions_amount', 'minimum_titles', 'hard_percentage', 'medium_percentage', 'easy_percentage',
-                        'points', 'debug']
+    required_options = ['questions_amount', 'minimum_titles', 'hard', 'medium', 'easy', 'points', 'debug']
     missing_options = [option for option in required_options if option not in options]
     if missing_options:
         raise ValueError(f"Missing required options in config file: {missing_options}")
-    for option in required_options:
+    for option in required_options[:-2]:  # Exclude 'debug' and 'points' from this check
         try:
-            value = int(config.get(section, option))
-            if option == 'questions_amount' and value > len(read_csv('Test.csv')):
-                raise ValueError(f"{option} exceeds the number of questions in the CSV file.")
+            int(config.get(section, option))
         except ValueError:
             raise ValueError(f"Invalid value type for {option}: expected integer.")
-    percentages = [int(config.get(section, f'{d}_percentage')) for d in ('hard', 'medium', 'easy')]
-    if sum(percentages) != 100:
-        raise ValueError("Percentage values do not add up to 100.")
+    if config.getint(section, 'hard') + config.getint(section, 'medium') + config.getint(section,
+                                                                                         'easy') != config.getint(
+            section, 'questions_amount'):
+        raise ValueError("The sum of hard, medium, and easy questions must equal the total questions amount.")
     return {
         'questions_amount': config.getint(section, 'questions_amount'),
         'minimum_titles': config.getint(section, 'minimum_titles'),
-        'hard_percentage': config.getfloat(section, 'hard_percentage'),
-        'medium_percentage': config.getfloat(section, 'medium_percentage'),
-        'easy_percentage': config.getfloat(section, 'easy_percentage'),
+        'hard': config.getint(section, 'hard'),
+        'medium': config.getint(section, 'medium'),
+        'easy': config.getint(section, 'easy'),
         'points': config.getint(section, 'points'),
-        'debug': config.getint(section, 'debug')
+        'debug': config.getboolean(section, 'debug')
     }
 
 
@@ -160,12 +156,19 @@ def generate_exam(questions, config_data):
         difficulty_counts = {'Hard': 0, 'Medium': 0, 'Easy': 0}
 
         # Generate the exam
-        for _ in range(config_data['questions_amount']):
+        for i in range(config_data['questions_amount']):
             if not questions:
                 break  # Exit loop if no more questions are available
+            if i < config_data['hard']:
+                difficulty = 'Hard'
+            elif i < config_data['hard'] + config_data['medium']:
+                difficulty = 'Medium'
+            else:
+                difficulty = 'Easy'
+
             selected_question_index = random.randint(0, len(questions) - 1)
             selected_question = questions[selected_question_index]
-            if selected_question not in exam:
+            if selected_question not in exam and selected_question[2] == difficulty:
                 exam.append(selected_question)
                 total_points += int(selected_question[3])
                 difficulty_counts[selected_question[2]] += 1
@@ -175,6 +178,10 @@ def generate_exam(questions, config_data):
                     # Append the value if it doesn't exist
                     total_titles.append(title_value)
 
+        # Validate that the total number of questions added matches the final question total
+        if len(exam) != config_data['questions_amount']:
+            continue  # Regenerate the exam if the total number of questions does not match the requirement
+
         # Calculate difficulty ratios based on the actual distribution of questions in the exam
         total_difficulties = sum(difficulty_counts.values())
         if total_difficulties == 0:  # Check for division by zero
@@ -182,22 +189,9 @@ def generate_exam(questions, config_data):
 
         difficulty_ratios = {k: v / total_difficulties * 100 for k, v in difficulty_counts.items()}
 
-        # Validation check against config values
-        if abs(difficulty_ratios['Hard'] - config_data['hard_percentage']) > 1:
-            # Allow small deviations due to randomness
-            continue  # Regenerate the exam if the hard ratio doesn't match closely
-        if abs(difficulty_ratios['Medium'] - config_data['medium_percentage']) > 1:
-            # Allow small deviations due to randomness
-            continue  # Regenerate the exam if the medium ratio doesn't match closely
-        if abs(difficulty_ratios['Easy'] - config_data['easy_percentage']) > 1:
-            # Allow small deviations due to randomness
-            continue  # Regenerate the exam if the easy ratio doesn't match closely
-
         # Final checks
         if total_points != config_data['points']:
             continue  # Regenerate the exam if total points do not match the required points
-        if len(exam) < config_data['questions_amount']:
-            continue  # Regenerate the exam if it does not meet the size requirement
         if len(total_titles) < config_data['minimum_titles']:
             continue  # Regenerate the exam if it does not meet the title requirement
 
