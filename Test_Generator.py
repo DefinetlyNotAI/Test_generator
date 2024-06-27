@@ -1,7 +1,7 @@
-import os
 import threading
 import csv
 import random
+from imgbb_api import *
 from configparser import ConfigParser
 
 
@@ -19,7 +19,8 @@ def read_csv(file_path):
         file_path (str): The path to the CSV file.
 
     Returns:
-        list: A list of rows from the CSV file, where each row is a list of values.
+        list: A list of rows from the CSV file, where each row is a list of values. If a URL is missing,
+              it will be represented as None in the corresponding position.
 
     Raises:
         ValueError: If an empty value is found in the CSV file.
@@ -43,7 +44,16 @@ def read_csv(file_path):
                 raise ValueError(f"Invalid score format at line {reader.line_num}: {row[3]}.")
             if not 0 <= score <= 100:
                 raise ValueError(f"Invalid score range at line {reader.line_num}: {score}.")
-            questions.append(row)
+
+            # Check if the URL column exists before processing it
+            if len(row) > 4 and row[4].strip():  # Assuming the URL is in the fifth column
+                url = row[4].strip()
+                if not url.startswith('https://'):
+                    raise ValueError(f"Invalid URL format at line {reader.line_num}: {url}.")
+            else:
+                url = None  # Set URL to None if it doesn't exist
+
+            questions.append([*row[:4], url])  # Append the row with the URL replaced by None if necessary
     return questions
 
 
@@ -207,8 +217,13 @@ def main():
     """
     try:
         # Read the CSV file and validate the config file
+        # handler = ImgBBHandler(urls=['http://example.com/image1.jpg', 'http://example.com/image2.png'])
+
+        # handler.upload_images()
+        # handler.download_images()
+
         questions = read_csv('Test.csv')
-        config_data = read_config('.config')
+        config_data = read_config('test_generation.config')
         exam, total_points, difficulty_ratios, total_titles = generate_exam(questions, config_data)
 
         # Check if the file Exam.txt exists
@@ -223,13 +238,23 @@ def main():
             # Write the data to the file
             if config_data['debug'] == 1:
                 file.write("Debug mode is on.\n\n")
-                file.write("Question            Type: Hard/Medium/Easy      Difficulty: Hard/Medium/Easy                                               [Points]\n")
                 for sublist in exam:
-                    file.write(f"{sublist[0]}            Type: {sublist[1]}      Difficulty: {sublist[2]}                                               [{sublist[3]}]\n")
+                    if sublist[4] is not None:
+                        file.write(
+                            f"{sublist[4]} & {sublist[0]} & Type: {sublist[1]} & Difficulty: {sublist[2]} & [{sublist[3]}]\n")
+                    else:
+                        file.write(
+                            f" & {sublist[0]} & Type: {sublist[1]} & Difficulty: {sublist[2]} & [{sublist[3]}]\n")
             else:
                 for sublist in exam:
-                    file.write(f"{sublist[0]}                                                                                                           [{sublist[3]}]\n")
-            file.write(f"Total exam is out of {config_data['points']} points.\n\n")
+                    if sublist[4] is not None:
+                        file.write(
+                            f"{sublist[4]} & {sublist[0]} & [{sublist[3]}]\n")
+                    else:
+                        file.write(
+                            f" & {sublist[0]} & [{sublist[3]}]\n")
+
+            file.write(f"\n\n & Total exam is out of {config_data['points']} points.")
 
         print(f"\nExam Generated and saved to Exam.txt")
         print(f"\nTotal Points in exam: {total_points}")
@@ -237,10 +262,12 @@ def main():
         print(f"Total Titles Used in exam: {len(total_titles)}")
         print(
             f"Difficulty Ratio used: Hard: {difficulty_ratios['Hard']}%, Medium: {difficulty_ratios['Medium']}%, Easy: {difficulty_ratios['Easy']}%")
+
     except Exception as e:
-        print("Error:", e)
+        print(f"An unexpected error occurred (Function main): {e}")
 
 
+# Create a new thread to run the main function
 try:
     # Start the program logic in a new thread
     thread = threading.Thread(target=main)
@@ -258,5 +285,5 @@ except TimeoutException as e:
     print("Timeout - Mostly due to too strict rules or too little questions were given in the CVS file.")
     exit(1)
 except Exception as e:
-    print(f"An unexpected error occurred: {e}")
+    print(f"An unexpected error occurred (No function): {e}")
     exit(1)
