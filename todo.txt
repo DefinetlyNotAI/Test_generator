@@ -1,16 +1,13 @@
-1) Add image url type in the cvs file and allow it to dynamically download images, place them in the exam and then delete any temp files downloaded
-	Use imgbb for uploading and downloading files
-2) Make the exam a excel sheet NOT txt
-3) Add a exclusion database, includes ALL non-needed title types
+TODO 2) Make the exam a excel sheet NOT txt DONE
+
+TODO 3) Add a exclusion database, includes ALL non-needed title types
 
 
-4) Make it cloud based aka online via google drive,
-
-
-	API key (The key to communicate with nirt's servers)
+TODO 4) Make it cloud based aka online via google drive,
+    	API key (The key to communicate with nirt's servers)
 	
 
-Nirts servers
+TODO 4.2)	Nirts servers
 	Request Exam Creation (API)
 		Send to my GitHub pages a request to start exam generation, data to include
  			Name (will be saved as the database name containing all required info)
