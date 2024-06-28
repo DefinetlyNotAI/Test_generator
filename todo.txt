@@ -1,6 +1,6 @@
 2) Make the exam an Excel sheet NOT txt
 
-TODO 3) Add an exclusion database, includes ALL non-needed title types
+3) Add an exclusion database, includes ALL non-needed title types and test it
 
 
 TODO 4) Make it cloud based aka online via Google drive,
