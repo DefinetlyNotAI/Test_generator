@@ -8,8 +8,8 @@ TODO 4) Make it cloud based aka online via Google drive,
 	
 
 TODO 4.1)	Nirts servers
-	Request Exam Creation (API)
-		Send to my GitHub pages a request to start exam generation, data to include
+	RequestExamCreation (API) [REC]
+		Send to my GitHub pages a request to start exam generation
  			Name (will be saved as the database name containing all required info)
 			Users password (for identification purposes)
 			.config file
@@ -18,6 +18,20 @@ TODO 4.1)	Nirts servers
 			Create a unique exam and send it back to the website
 		If database exists
 			Create an exam, with excluded titles removed and send it back to the website
+	RequestUserGeneration (API) [RUG]
+        Send to my GitHub pages a request to start user generation
+            Creates a new database with that username
+            Creates a unique password for that user
+                Sends back the username and password
+            Edits the db with the required password and username
+    RequestUserDBUpdate (API) [RUD]
+        Send to my GitHub pages a request to update user database, data to include is username, and exam results in format:
+            TITLE : PERCENTAGE-MARK
+            Check if the mark is below 40%, if yes modify the DB to include the TITLE as exclusion
+    RequestUserRemoval (API) [RUR]
+            Send to my GitHub pages a request to remove user database, data to include is username, and password:
+                TITLE : PERCENTAGE-MARK
+                Check if the mark is below 40%, if yes modify the DB to include the TITLE as exclusion
 
 			
 
