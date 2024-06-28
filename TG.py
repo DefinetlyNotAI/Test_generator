@@ -1,14 +1,192 @@
-import threading
 import csv
+import os.path
 import random
+import secrets
+import sqlite3
+import string
+import threading
 from configparser import ConfigParser
-import os
 import pandas as pd
+from DB import *
 
 
-# Exception class for timeout
-class TimeoutException(Exception):
-    pass
+class UserManager:
+    def __init__(self, db_name='users.db'):
+        self.db_name = db_name
+        self.conn = None
+        self.cursor = None
+
+    def connect(self):
+        """Connects to the SQLite database."""
+        if self.conn is None:
+            self.conn = sqlite3.connect(self.db_name)
+            self.cursor = self.conn.cursor()
+
+    def disconnect(self):
+        """Closes the database connection."""
+        if self.conn:
+            self.conn.close()
+            self.conn = None
+            self.cursor = None
+
+    @staticmethod
+    def create_db_initial():
+        # Connect to the SQLite database
+        # This will create the database file if it doesn't already exist
+        conn = sqlite3.connect('users.db')
+
+        # Create a cursor object using the cursor() method
+        cursor = conn.cursor()
+
+        # Drop the table if it already exists to start fresh
+        cursor.execute('''DROP TABLE IF EXISTS Users;''')
+
+        # Create a table named Users with id, username, password, and titles_to_exclude columns
+        cursor.execute('''CREATE TABLE Users (
+                           id INTEGER PRIMARY KEY,
+                           username TEXT NOT NULL UNIQUE,
+                           password TEXT NOT NULL,
+                           titles_to_exclude TEXT);''')
+
+        # Commit the transaction
+        conn.commit()
+
+        # Close the connection
+        conn.close()
+
+    def verify_password(self, username, password):
+        """
+        Verifies the password for a given username by comparing it with the stored password in the database.
+        """
+        self.connect()
+        self.cursor.execute("SELECT password FROM Users WHERE username=?", (username,))
+        result = self.cursor.fetchone()
+        self.disconnect()
+
+        if result:
+            stored_password = result[0]
+            if password == stored_password:
+                return True
+        return False
+
+    def create_db(self, username):
+        """
+        Add a user to the database with a random password.
+        """
+        self.connect()
+        self.cursor.execute("SELECT * FROM users WHERE username=?", (username,))
+        existing_user = self.cursor.fetchone()
+        self.disconnect()
+
+        if existing_user:
+            return 409
+
+        alphabet = string.ascii_letters + string.digits
+        password_new = ''.join(secrets.choice(alphabet) for _ in range(12))
+
+        self.connect()
+        self.cursor.execute("INSERT INTO users (username, password) VALUES (?,?)", (username, password_new))
+        self.conn.commit()
+        self.disconnect()
+
+        password_str = "Password is " + password_new
+
+        um.add_exclusion_db(username, exclusion_titles, password_new, "CDB")
+
+        return password_str
+
+    def remove(self, username, password):
+        """
+        Removes all data associated with the specified username from the database.
+        """
+        if self.verify_password(username, password):
+            self.connect()
+            self.cursor.execute('''DELETE FROM Users WHERE username=?''', (username,))
+            self.conn.commit()
+            self.disconnect()
+            return f"Successfully removed data for user {username}."
+        else:
+            return 401
+
+    def add_exclusion_db_main(self, name, titles, password):
+        """
+        Adds titles to the exclusions list for the specified user.
+        """
+        if self.verify_password(name, password):
+            self.connect()
+            try:
+                self.cursor.execute('''SELECT titles_to_exclude FROM Users WHERE username=?''', (name,))
+                result = self.cursor.fetchone()
+
+                # Check if the result is None or NULL and replace with a placeholder
+                if result is None or result[0] is None:
+                    initial_titles = "PLACEHOLDER"  # Placeholder for empty titles_to_exclude
+                else:
+                    initial_titles = result[0]
+
+                current_titles = initial_titles.strip()
+
+                # Convert current_titles and titles to sets for comparison
+                current_titles_set = set(current_titles.split(','))
+                titles_set = set(titles)
+
+                # Calculate the difference between the two sets
+                new_titles_set = titles_set - current_titles_set
+
+                # If there are new titles to add, proceed with the update
+                if new_titles_set:
+                    updated_titles = ','.join(list(new_titles_set))  # Join the new titles with a comma and space
+                    self.cursor.execute(
+                        '''UPDATE Users SET titles_to_exclude = COALESCE(titles_to_exclude ||?, '') WHERE username =?''',
+                        (updated_titles, name))
+                    self.conn.commit()
+                    return f"Successfully updated titles for user {name}."
+                else:
+                    return 400
+
+            except Exception:
+                return 500
+        else:
+            return 401
+
+    @staticmethod
+    def add_exclusion_db(name, titles, password, special=None):
+        value = um.add_exclusion_db_main(name, titles, password)
+        if not special:
+            um.add_exclusion_db_main(name, ",", password)
+        return value
+
+    def get_excluded_titles(self, username):
+        """
+        Fetches and returns the list of titles to exclude for the specified username from the database.
+        """
+        self.connect()
+        self.cursor.execute('''SELECT titles_to_exclude FROM Users WHERE username=?''', (username,))
+        result = self.cursor.fetchone()
+        self.disconnect()
+
+        if result:
+            titles_list = result[0].split(',')
+            titles_to_exclude = [title.strip() for title in titles_list]
+        else:
+            titles_to_exclude = []
+
+        return titles_to_exclude
+
+    @staticmethod
+    def extract_user_info(data):
+        """
+        Extracts the Username, Password, and Exclusion_titles sublist from the user_data dictionary.
+
+        :param data: A dictionary containing user information including Username, Password, and Exclusion_titles.
+        :return: A tuple containing the extracted Username, Password, and Exclusion_titles sublist.
+        """
+        # Safely accessing the values from the user_data dictionary
+        username = data.get('Username', 'Unknown')
+        password = data.get('Password', 'Unknown')
+        exclusion_titles = data.get('Exclusion_titles', [])
+
+        return username, password, exclusion_titles
 
 
 # Function to read and validate the CSV file
@@ -91,9 +269,7 @@ def read_config(file_path):
             int(config.get(section, option))
         except ValueError:
             raise ValueError(f"Invalid value type for {option}: expected integer.")
-    if config.getint(section, 'hard') + config.getint(section, 'medium') + config.getint(section,
-                                                                                         'easy') != config.getint(
-            section, 'questions_amount'):
+    if config.getint(section, 'hard') + config.getint(section, 'medium') + config.getint(section, 'easy') != config.getint(section, 'questions_amount'):
         raise ValueError("The sum of hard, medium, and easy questions must equal the total questions amount.")
     return {
         'questions_amount': config.getint(section, 'questions_amount'),
@@ -132,13 +308,15 @@ def create_excel_from_txt():
 
 
 # Function to generate the exam
-def generate_exam(questions, config_data):
+def generate_exam(questions, config_data, exclude_list):
     """
-    Generates an exam based on the provided questions and configuration data.
+    Generates an exam based on the provided questions and configuration data,
+    excluding specified titles.
 
     Args:
         questions (list): A list of questions to generate the exam from.
         config_data (dict): A dictionary containing configuration data for generating the exam.
+        exclude_list (list): A list of titles to exclude from the exam.
 
     Returns:
         tuple: A tuple containing the generated exam, total points, difficulty ratios, and total titles.
@@ -155,9 +333,12 @@ def generate_exam(questions, config_data):
         total_titles = []
         difficulty_counts = {'Hard': 0, 'Medium': 0, 'Easy': 0}
 
-        # Generate the exam
+        # Filter out questions with titles in the exclude_list
+        filtered_questions = [q for q in questions if q[1] not in exclude_list]
+
+        # Generate the exam using the filtered questions
         for i in range(config_data['questions_amount']):
-            if not questions:
+            if not filtered_questions:
                 break  # Exit loop if no more questions are available
             if i < config_data['hard']:
                 difficulty = 'Hard'
@@ -166,13 +347,13 @@ def generate_exam(questions, config_data):
             else:
                 difficulty = 'Easy'
 
-            selected_question_index = random.randint(0, len(questions) - 1)
-            selected_question = questions[selected_question_index]
+            selected_question_index = random.randint(0, len(filtered_questions) - 1)
+            selected_question = filtered_questions[selected_question_index]
             if selected_question not in exam and selected_question[2] == difficulty:
                 exam.append(selected_question)
                 total_points += int(selected_question[3])
                 difficulty_counts[selected_question[2]] += 1
-                questions.pop(selected_question_index)  # Remove the selected question from the pool
+                filtered_questions.pop(selected_question_index)  # Remove the selected question from the pool
                 title_value = selected_question[1]
                 if title_value not in total_titles:
                     # Append the value if it doesn't exist
@@ -234,15 +415,13 @@ def main():
         # Read the CSV file and validate the config file
         questions = read_csv('Test.csv')
         config_data = read_config('.config')
-        exam, total_points, difficulty_ratios, total_titles = generate_exam(questions, config_data)
+        Exclude_list = um.get_excluded_titles(username)
+        exam, total_points, difficulty_ratios, total_titles = generate_exam(questions, config_data, Exclude_list)
 
         # Check if the file Exam.txt exists
         if os.path.exists('Exam.txt'):
             # If the file exists, delete it
             os.remove('Exam.txt')
-            print("Exam.txt has been deleted.")
-        else:
-            print("Exam.txt does not exist.")
 
         with open('Exam.txt', 'w') as file:
             # Write the data to the file
@@ -264,37 +443,71 @@ def main():
 
             file.write(f"\n\nTotal exam is out of {config_data['points']} points.")
 
-        print(f"\nExam Generated and saved to Exam.txt")
-        print(f"\nTotal Points in exam: {total_points}")
-        print(f"Number of Questions Included in exam: {len(exam)}")
-        print(f"Total Titles Used in exam: {len(total_titles)}")
-        print(
-            f"Difficulty Ratio used: Hard: {difficulty_ratios['Hard']}%, Medium: {difficulty_ratios['Medium']}%, Easy: {difficulty_ratios['Easy']}%")
-
         create_excel_from_txt()
 
-    except Exception as e:
-        print(f"An unexpected error occurred (Function main): {e}")
+        return f'''
+        \nExam Generated and saved to Exam.xlsx
+        \nExam Generation info;
+        Total Points in exam: {total_points}
+        Number of Questions Included in exam: {len(exam)}
+        Total Titles Used in exam: {len(total_titles)}
+        Difficulty Ratio used: Hard: {difficulty_ratios['Hard']}%, Medium: {difficulty_ratios['Medium']}%, Easy: {difficulty_ratios['Easy']}%
+        '''
+
+    except Exception:
+        return 520
 
 
-# Create a new thread to run the main function
-try:
-    # Start the program logic in a new thread
-    thread = threading.Thread(target=main)
-    thread.start()
+if __name__ == "__main__":
+    def REC():
+        # Create a new thread to run the main function
+        try:
+            # Initialize a variable to hold the result of the main function
+            result = None
 
-    # Wait for 20 seconds or until the thread completes
-    thread.join(timeout=20)
+            # Define a wrapper function around the main function to capture its result
+            def wrapper():
+                nonlocal result
+                result = main()
 
-    # Check if the thread has finished within the timeout period
-    if thread.is_alive():
-        # If the thread is still alive (i.e., hasn't finished), raise a TimeoutException
-        raise TimeoutException(
-            "Timeout - Mostly due to too strict rules or too little questions were given in the CVS file.")
+            # Start the wrapper function in a new thread
+            thread = threading.Thread(target=wrapper)
+            thread.start()
 
-except TimeoutException as e:
-    print("Timeout - Mostly due to too strict rules or too little questions were given in the CVS file.")
-    exit(1)
-except Exception as e:
-    print(f"An unexpected error occurred (No function): {e}")
-    exit(1)
+            # Wait for 20 seconds or until the thread completes
+            thread.join(timeout=20)
+
+            # Check if the thread has finished within the timeout period
+            if thread.is_alive():
+                # If the thread is still alive (i.e., hasn't finished), raise a TimeoutException
+                return "Timeout - Mostly due to too strict rules or too little questions were given in the CVS file."
+            else:
+                # Return the result of the main function
+                return result
+        except Exception:
+            return 520
+
+    def init():
+        if api == "REC":
+            DATA = REC()
+        elif api == "RUG":
+            DATA = um.create_db(username)
+        elif api == "RUD":
+            DATA = um.add_exclusion_db(username, exclusion_titles, password)
+        elif api == "RUR":
+            DATA = um.remove(username, password)
+        else:
+            DATA = 404
+
+        send_data_to_nirt(DATA)
+
+    # Initialize the UserManager
+    um = UserManager(db_name='users.db')
+    if not os.path.exists("users.db"):
+        um.create_db_initial()
+
+    # Initialize the API received variables
+    username, password, exclusion_titles = um.extract_user_info(api_return)
+
+    # Main startup
+    init()

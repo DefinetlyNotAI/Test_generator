@@ -3,7 +3,12 @@ Give the following from nirt servers:
 
 ### REC API
 Expects
-`.config` file to be supplied
+`.config` file to be supplied and
+```python
+api_return = {
+    "Username": "user",
+    }
+```
 
 Returns
 `Exam.xslx` file, which is the exam, On your end should be the code to make it into an exam.
@@ -88,6 +93,7 @@ If a message gives you a number not text, know it's an error code:
 
 - 400: Bad Request - Failed to access database
 - 401: Unauthorized Access - Incorrect password
+- 404: Not found - API request not correct/not found
 - 409: Conflict - Already exists
 - 500: Internal Server Error - SQLite
 - 520: Unknown error - Caught exception

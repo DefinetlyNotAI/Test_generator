@@ -31,7 +31,7 @@ To get started with **Exam Generator**, ensure you have Python installed on your
 ### Installation
 
 This project is intended to be run directly without installation.
-Ensure you have Python installed and then execute the script via the command line `python3 Test_Generator.py`.
+Ensure you have Python installed and then execute the script via the command line `python3 TG.py`.
 
 Finally, you can clone into the project repository and run the script by executing the following command: `git clone https://github.com/DefinetlyNotAI/Test-generator.git`
 
@@ -39,7 +39,7 @@ Finally, you can clone into the project repository and run the script by executi
 
 1. Place your `Test.csv` file in the project directory, containing your exam questions formatted correctly.
 2. Create a configuration file (`.config`) in the same directory, specifying your desired exam parameters.
-3. Run the script. The generated exam will be saved as `Exam.txt`.
+3. Run the script. The generated exam will be saved as `Exam.xlsx`.
 
 For better results, you can make sure the config file matches the first bunch of questions,
 this insures to timeout, AND still generates random questions.

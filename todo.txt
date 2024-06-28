@@ -2,8 +2,9 @@
 
 3) Add an exclusion database, includes ALL non-needed title types and test it
 
+3.1) TODO Clean up everything
 
-TODO 4) Make it cloud based aka online via Google drive,
+TODO 4) Make it cloud based aka online via Google Drive,
     	API key (The key to communicate with nirt's servers)
 	
 
@@ -35,4 +36,14 @@ TODO 4.1)	Nirts servers
 
 			
 
-		
+Progress:
+
+Image_integration - 0%
+Exclusion Database - 60%
+Excel Exam [Not txt] - 100%
+Student Database - 100%
+API setup - 10%
+Cloud Operation [GitHub Pages] - 0%
+Cleaning and Refactoring - 50%
+
+Overall - 46%
