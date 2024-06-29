@@ -618,10 +618,11 @@ def database_thread():
         return DATA
 
     # Main startup
-    init()
+    return init()
 
 
 um = UserManager(db_name='users.db')
 if not os.path.exists("users.db"):
     um.create_db_initial()
-database_thread()
+else:
+    print(database_thread())
