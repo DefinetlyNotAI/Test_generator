@@ -1,8 +1,8 @@
 # TODO Make this generate this dictionary based on the API info from Nirt
 api_return = {
     "Username": "J",
-    "Password": "jujtX4WBb45z",
-    "Exclusion_titles": ["Tit", "Tie2", "Tle3", "Tle4"]
+    "Password": "z4g8o1Mz8Kho",
+    "Exclusion_titles": ["t1"]
 }
 
 # TODO Sets what this code should do based on what nirt wants (REC/RUG/RUR/RUD)
