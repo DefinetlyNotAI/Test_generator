@@ -10,6 +10,7 @@ from configparser import ConfigParser
 import pandas as pd
 from API import *
 
+
 class UserManager:
     def __init__(self, db_name='users.db'):
         """
@@ -284,7 +285,11 @@ def read_csv(file_path):
             if not 0 <= score <= 100:
                 raise ValueError(f"Invalid score range at line {reader.line_num}: {score}.")
 
-            questions.append([*row[:4]])  # Append the row with the URL replaced by None if necessary
+            # Check if the URL column exists and is not empty
+            url_column_index = 4  # Assuming the URL is in the 5th column (index starts at 0)
+            url = row[url_column_index].strip() if url_column_index < len(row) else None
+
+            questions.append([*row[:url_column_index], url])  # Append the row with the URL if present, otherwise append None
     return questions
 
 
@@ -356,9 +361,9 @@ def create_excel_from_txt(debug):
 
     # Define headers based on the debug flag
     if debug:
-        headers = ['Question', 'Title', 'Difficulty', 'Score']
+        headers = ['URL', 'Question', 'Title', 'Difficulty', 'Score']
     else:
-        headers = ['Question', 'Score']
+        headers = ['URL', 'Question', 'Score']
 
     # Open the text file and read it line by line
     with open('Exam.txt', 'r') as file:
@@ -373,10 +378,10 @@ def create_excel_from_txt(debug):
 
             # Process the parts based on the debug flag
             if debug:
-                if len(parts) == 4:  # Ensure there are exactly 4 parts
+                if len(parts) == 5:  # Ensure there are exactly 4 parts
                     data.append(parts)  # Directly append the parts as a new row
             else:
-                if len(parts) == 2:  # Ensure there are exactly 2 parts
+                if len(parts) == 3:  # Ensure there are exactly 2 parts
                     data.append(parts)  # Directly append the parts as a new row
 
     # Convert the list of lists into a DataFrame
@@ -513,17 +518,17 @@ def main():
                 file.write("Debug mode is on.\n\n")
                 for sublist in exam:
                     file.write(
-                        f"{sublist[0]} & Type: {sublist[1]} & Difficulty: {sublist[2]} & [{sublist[3]}]\n")
+                        f"{sublist[4]} & {sublist[0]} & Type: {sublist[1]} & Difficulty: {sublist[2]} & [{sublist[3]}]\n")
 
                     file.write(
-                        f"{sublist[0]} & Type: {sublist[1]} & Difficulty: {sublist[2]} & [{sublist[3]}]\n")
+                        f"{sublist[4]} & {sublist[0]} & Type: {sublist[1]} & Difficulty: {sublist[2]} & [{sublist[3]}]\n")
             else:
                 for sublist in exam:
                     file.write(
-                        f"{sublist[0]} & [{sublist[3]}]\n")
+                        f"{sublist[4]} & {sublist[0]} & [{sublist[3]}]\n")
 
                     file.write(
-                        f"{sublist[0]} & [{sublist[3]}]\n")
+                        f"{sublist[4]} & {sublist[0]} & [{sublist[3]}]\n")
 
             file.write(f"\n\nTotal exam is out of {config_data['points']} points.")
 

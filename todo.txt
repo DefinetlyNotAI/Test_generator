@@ -4,10 +4,9 @@
 
 3.1) Clean up everything
 
-TODO Fix bug where generated exam is duplicated
+3.2)Fix bug where generated exam is duplicated
 
-TODO 4) Make it cloud based aka online via Google Drive,
-    	API key (The key to communicate with nirt's servers)
+TODO 4) Make it cloud based via github pages
 	
 
 TODO 4.1)	Nirts servers
@@ -40,11 +39,11 @@ TODO 4.1)	Nirts servers
 
 Progress:
 
-Image_integration - 30%
+Image_integration - 100% (Set up on your end as its a URL)
 Exclusion Database - 100%
 Excel Exam [Not txt] - 100%
 Student Database - 100%
-API setup - 40%
-Cleaning and Refactoring - 60%
+API setup - 50%
+Cleaning and Refactoring - 80%
 
 Overall - 72%

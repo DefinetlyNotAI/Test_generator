@@ -12,6 +12,9 @@ api_return = {
 
 Returns
 `Exam.xslx` file, which is the exam, On your end should be the code to make it into an exam.
+If debug is false, the headers would be ['URL', 'Question', 'Score']
+If debug is true, the headers would be ['URL', 'Question', 'Title', 'Difficulty', 'Score']
+URL is the URL of the question's image (If not there, it would be None).
 
 Function:
 ```
