@@ -47,9 +47,10 @@ Expects
 api_return = {
     "Username": "user",
     "Password": "password",
-    "Exclusion_titles": ["Title", "Title2", "Title3", "Title4"]
+    "Exclusion_titles": ["Title","Title2","Title3","Title4"]
 }
 ```
+Ensure NO spaces are in the exclusion titles list.
 
 Returns
 ```python

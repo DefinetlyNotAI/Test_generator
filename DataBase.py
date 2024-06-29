@@ -10,7 +10,6 @@ from configparser import ConfigParser
 import pandas as pd
 from API import *
 
-
 class UserManager:
     def __init__(self, db_name='users.db'):
         """
@@ -330,9 +329,7 @@ def read_config(file_path):
             int(config.get(section, option))
         except ValueError:
             raise ValueError(f"Invalid value type for {option}: expected integer.")
-    if config.getint(section, 'hard') + config.getint(section, 'medium') + config.getint(section,
-                                                                                         'easy') != config.getint(
-            section, 'questions_amount'):
+    if config.getint(section, 'hard') + config.getint(section, 'medium') + config.getint(section, 'easy') != config.getint(section, 'questions_amount'):
         raise ValueError("The sum of hard, medium, and easy questions must equal the total questions amount.")
     return {
         'questions_amount': config.getint(section, 'questions_amount'),
@@ -368,7 +365,7 @@ def create_excel_from_txt(debug):
         lines = file.readlines()
         for i, line in enumerate(lines):
             # Skip odd-numbered lines (starting count from 0)
-            if i % 2!= 0:
+            if i % 2 != 0:
                 continue
 
             # Split the line at '&' to separate the components
@@ -543,7 +540,7 @@ def main():
         Total Points in exam: {total_points}
         Number of Questions Included in exam: {len(exam)}
         Total Titles Used in exam: {len(total_titles)}
-        Difficulty Ratio used: Hard: {difficulty_ratios['Hard']}%, Medium: {difficulty_ratios['Medium']}%, Easy: {difficulty_ratios['Easy']}%
+        Difficulty Ratio used: Hard: {round(difficulty_ratios['Hard'], 2)}%, Medium: {round(difficulty_ratios['Medium'], 2)}%, Easy: {round(difficulty_ratios['Easy'], 2)}%
         '''
 
     except Exception:

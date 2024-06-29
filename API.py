@@ -2,7 +2,7 @@
 api_return = {
     "Username": "J",
     "Password": "z4g8o1Mz8Kho",
-    "Exclusion_titles": ["t1"]
+    "Exclusion_titles": ["t2,t4"]
 }
 
 # TODO Sets what this code should do based on what nirt wants (REC/RUG/RUR/RUD)
