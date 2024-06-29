@@ -4,11 +4,13 @@ Give the following from nirt servers:
 ### REC API
 Expects
 `.config` file to be supplied and
-```python
-api_return = {
-    "Username": "user",
-    }
+```json
+{
+    "api": "REC",
+    "username": "example_user"
+}
 ```
+Via API.json file.
 
 Returns
 `Exam.xslx` file, which is the exam, On your end should be the code to make it into an exam.
@@ -24,11 +26,13 @@ REC()
 ### RUG API
 
 Expects
-```python
-api_return = {
-    "Username": "user",
-    }
+```json
+{
+    "api": "REC",
+    "username": "example_user"
+}
 ```
+Via API.json file
 
 Returns
 ```python
@@ -46,14 +50,15 @@ um.create_db(username)
 ### RUD API
 
 Expects
-```python
-api_return = {
-    "Username": "user",
-    "Password": "password",
-    "Exclusion_titles": ["Title","Title2","Title3","Title4"]
+```json
+{
+    "api": "REC",
+    "username": "example_user",
+    "password": "example_password",
+    "exclusion_titles": ["title1", "title2"]
 }
 ```
-Ensure NO spaces are in the exclusion titles list.
+Via API.json file, ensure NO spaces are in the exclusion titles list.
 
 Returns
 ```python
@@ -71,12 +76,15 @@ um.add_exclusion_db(username, exclusion_titles, password)
 ### RUR API
 
 Expects
-```python
-api_return = {
-    "Username": "user",
-    "Password": "password",
-    }
+```json
+{
+    "api": "REC",
+    "username": "example_user",
+    "password": "example_password",
+    "exclusion_titles": ["title1", "title2"]
+}
 ```
+Via API.json file, ensure NO spaces are in the exclusion titles list.
 
 Returns
 ```python

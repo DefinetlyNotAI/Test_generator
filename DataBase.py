@@ -503,7 +503,7 @@ def main():
     try:
         # Read the CSV file and validate the config file
         questions = read_csv('Test.csv')
-        config_data = read_config('.config')
+        config_data = read_config('DataBase.config')
         Exclude_list = um.get_excluded_titles(username)
         exam, total_points, difficulty_ratios, total_titles = generate_exam(questions, config_data, Exclude_list)
 
@@ -597,6 +597,7 @@ if __name__ == "__main__":
         """
         This function initializes data based on the selected API, processes it accordingly, and sends the data to Nirt.
         """
+
         if api == "REC":
             DATA = REC()
         elif api == "RUG":
@@ -607,17 +608,16 @@ if __name__ == "__main__":
             DATA = um.remove(username, password)
         else:
             DATA = 404
+            return DATA
 
         send_data_to_nirt(DATA)
 
 
-    # Initialize the UserManager
+    # Initialize the UserManager and API values
+    api, username, password, exclusion_titles = read_api()
     um = UserManager(db_name='users.db')
     if not os.path.exists("users.db"):
         um.create_db_initial()
-
-    # Initialize the API received variables
-    username, password, exclusion_titles = um.extract_user_info(api_return)
 
     # Main startup
     init()
