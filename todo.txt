@@ -1,42 +1,8 @@
-2) Make the exam an Excel sheet NOT txt
+TODO Add error checks to all, especially test what would happen if users.db doesnt exist, also do more tests
 
-3) Add an exclusion database, includes ALL non-needed title types and test it
+TODO make a website that is clean
 
-3.1) Clean up everything
-
-3.2) Fix bug where generated exam is duplicated
-
-TODO 4) Make it cloud based via github pages and API
-
-TODO 4.1) Add error checks to all, especially test what would happen if users.db doesnt exist, also do more tests
-
-TODO 4.1)	Nirts servers
-	RequestExamCreation (API) [REC]
-		Send to my GitHub pages a request to start exam generation
- 			Name (will be saved as the database name containing all required info)
-			Users password (for identification purposes)
-			.config file
-		Verify name with password
-		If database doesn't exist, create one (step 3)
-			Create a unique exam and send it back to the website
-		If database exists
-			Create an exam, with excluded titles removed and send it back to the website
-	RequestUserGeneration (API) [RUG]
-        Send to my GitHub pages a request to start user generation
-            Creates a new database with that username
-            Creates a unique password for that user
-                Sends back the username and password
-            Edits the db with the required password and username
-    RequestUserDBUpdate (API) [RUD]
-        Send to my GitHub pages a request to update user database, data to include is username, and exam results in format:
-            TITLE : PERCENTAGE-MARK
-            Check if the mark is below 40%, if yes modify the DB to include the TITLE as exclusion
-    RequestUserRemoval (API) [RUR]
-            Send to my GitHub pages a request to remove user database, data to include is username, and password:
-                TITLE : PERCENTAGE-MARK
-                Check if the mark is below 40%, if yes modify the DB to include the TITLE as exclusion
-
-			
+TODO Make it that when config and json files are found, RUN DataBase.py
 
 Progress:
 
@@ -44,7 +10,6 @@ Image_integration - 100% (Set up on your end as its a URL)
 Exclusion Database - 100%
 Excel Exam [Not txt] - 100%
 Student Database - 100%
-API setup - 50%
-Cleaning and Refactoring and error handling - 70%
-
-Overall - 87%
+API setup - 80%
+Cleaning and Refactoring and error handling - 80%
+Website - 15%

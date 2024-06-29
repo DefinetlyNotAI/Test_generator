@@ -1,14 +1,13 @@
 import csv
+import json
 import os.path
 import random
 import secrets
 import sqlite3
 import string
-import threading
 import time
 from configparser import ConfigParser
 import pandas as pd
-from API import *
 
 
 class UserManager:
@@ -93,7 +92,7 @@ class UserManager:
                 return True
         return False
 
-    def create_db(self, username):
+    def create_db(self, username, exclusion_titles):
         """
         Add a user to the database with a random password.
         """
@@ -273,8 +272,18 @@ def read_csv(file_path):
         reader = csv.reader(file)
         next(reader)  # Skip header row if present
         for row in reader:
-            if not all(value.strip() for value in row):
+            # Initialize a list to hold the indices to check
+            indices_to_check = []
+
+            # Populate the list with indices to check, excluding the URL column index
+            for i in range(len(row)):
+                if i != 4:  # Excluding the URL column index (assuming it's always the 5th column)
+                    indices_to_check.append(i)
+
+            # Use a generator expression to strip values and check for emptiness across the specified indices
+            if not all(value.strip() for value in (row[i] for i in indices_to_check)):
                 raise ValueError("Empty value found in CSV.")
+
             difficulty = row[2].strip()
             if difficulty not in ['Hard', 'Medium', 'Easy']:
                 raise ValueError(f"Invalid difficulty level at line {reader.line_num}: {difficulty}.")
@@ -285,11 +294,12 @@ def read_csv(file_path):
             if not 0 <= score <= 100:
                 raise ValueError(f"Invalid score range at line {reader.line_num}: {score}.")
 
-            # Check if the URL column exists and is not empty
+            # Adjusted to allow the URL column to be empty
             url_column_index = 4  # Assuming the URL is in the 5th column (index starts at 0)
             url = row[url_column_index].strip() if url_column_index < len(row) else None
 
-            questions.append([*row[:url_column_index], url])  # Append the row with the URL if present, otherwise append None
+            questions.append(
+                [*row[:url_column_index], url])  # Append the row with the URL if present, otherwise append None
     return questions
 
 
@@ -334,7 +344,8 @@ def read_config(file_path):
             int(config.get(section, option))
         except ValueError:
             raise ValueError(f"Invalid value type for {option}: expected integer.")
-    if config.getint(section, 'hard') + config.getint(section, 'medium') + config.getint(section, 'easy') != config.getint(section, 'questions_amount'):
+    if config.getint(section, 'hard') + config.getint(section, 'medium') + config.getint(section,
+                                                                                         'easy') != config.getint(section, 'questions_amount'):
         raise ValueError("The sum of hard, medium, and easy questions must equal the total questions amount.")
     return {
         'questions_amount': config.getint(section, 'questions_amount'),
@@ -471,8 +482,29 @@ def generate_exam(questions, config_data, exclude_list):
     return exam, total_points, difficulty_ratios, total_titles
 
 
+def read_api():
+    """
+    Reads the configuration data from the 'API.json' file and returns the values for 'api', 'username', 'password', and 'exclusion_titles'.
+
+    Returns:
+        tuple: A tuple containing the values for 'api', 'username', 'password', and 'exclusion_titles'.
+            - api (str): The API endpoint.
+            - username (str): The username for authentication.
+            - password (str): The password for authentication.
+            - exclusion_titles (list): A list of titles to exclude from the exam.
+    """
+    with open('API.json') as f:
+        config = json.load(f)
+
+    api = config['api']
+    username = config['username']
+    password = config['password']
+    exclusion_titles = config['exclusion_titles']
+    return api, username, password, exclusion_titles
+
+
 # Main execution flow
-def main():
+def main(username):
     """
     The main function that reads a CSV file validates a config file, generates an exam, and writes the exam to a file.
 
@@ -548,76 +580,48 @@ def main():
         Difficulty Ratio used: Hard: {round(difficulty_ratios['Hard'], 2)}%, Medium: {round(difficulty_ratios['Medium'], 2)}%, Easy: {round(difficulty_ratios['Easy'], 2)}%
         '''
 
-    except Exception:
-        return 520
+    except Exception as e:
+        return "520 " + str(e)
 
 
-if __name__ == "__main__":
-    def REC():
-        """
-        Create a new thread to run the main function
-        """
+def database_thread():
+    """
+    Create a new thread to run the main function
+    """
+
+    def REC(username):
         # Create a new thread to run the main function
         try:
-            # Initialize a variable to hold the result of the main function
-            result = None
-
-            # Define a wrapper function around the main function to capture its result
-            def wrapper():
-                """
-                A wrapper function that captures the result of the main function and assigns it to the nonlocal variable 'result'.
-
-                This function does not take any parameters.
-
-                Returns:
-                    None
-                """
-                nonlocal result
-                result = main()
-
-            # Start the wrapper function in a new thread
-            thread = threading.Thread(target=wrapper)
-            thread.start()
-
-            # Wait for 20 seconds or until the thread completes
-            thread.join(timeout=20)
-
-            # Check if the thread has finished within the timeout period
-            if thread.is_alive():
-                # If the thread is still alive (i.e., hasn't finished), raise a TimeoutException
-                return "Timeout - Mostly due to too strict rules or too little questions were given in the CVS file."
-            else:
-                # Return the result of the main function
-                return result
+            result = main(username)
+            return result
         except Exception:
             return 520
-
 
     def init():
         """
         This function initializes data based on the selected API, processes it accordingly, and sends the data to Nirt.
         """
+        # Initialize the UserManager and API values
+        api, username, password, exclusion_titles = read_api()
 
         if api == "REC":
-            DATA = REC()
+            DATA = REC(username)
         elif api == "RUG":
-            DATA = um.create_db(username)
+            DATA = um.create_db(username, exclusion_titles)
         elif api == "RUD":
             DATA = um.add_exclusion_db(username, exclusion_titles, password)
         elif api == "RUR":
             DATA = um.remove(username, password)
         else:
             DATA = 404
-            return DATA
 
-        send_data_to_nirt(DATA)
-
-
-    # Initialize the UserManager and API values
-    api, username, password, exclusion_titles = read_api()
-    um = UserManager(db_name='users.db')
-    if not os.path.exists("users.db"):
-        um.create_db_initial()
+        return DATA
 
     # Main startup
     init()
+
+
+um = UserManager(db_name='users.db')
+if not os.path.exists("users.db"):
+    um.create_db_initial()
+database_thread()
