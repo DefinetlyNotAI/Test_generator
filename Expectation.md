@@ -114,7 +114,7 @@ um.remove(username, password)
 ## Codes
 If a message gives you a number not text, know it's an error code:
 
-- 400: Bad Request - Failed to access database
+- 400: Bad Request - Failed to access database/Bad Inputs
 - 401: Unauthorized Access - Incorrect password
 - 404: Not found - API request not correct/not found
 - 409: Conflict - Already exists

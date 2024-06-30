@@ -5,7 +5,7 @@ from DataBase import *
 app = Flask(__name__)
 
 err_codes = {
-    400: "Bad Request - Failed to access database",
+    400: "Bad Request - Failed to access database or Bad Inputs",
     401: "Unauthorized Access - Incorrect password",
     404: "Not found - API request not correct/not found",
     409: "Conflict - Already exists",
