@@ -21,12 +21,9 @@ class UserManager:
         Returns:
             None
         """
-        try:
-            self.db_name = db_name
-            self.conn = None
-            self.cursor = None
-        except Exception as e:
-            exit(e)
+        self.db_name = db_name
+        self.conn = None
+        self.cursor = None
 
     def connect(self):
         """Connects to the SQLite database."""
@@ -256,7 +253,7 @@ class UserManager:
 
             return titles_to_exclude
         except Exception as e:
-            exit(e)
+            return [e, 520]
 
     @staticmethod
     def extract_user_info(data):
@@ -279,7 +276,7 @@ class UserManager:
 
             return username, password, exclusion_titles
         except Exception as e:
-            exit(e)
+            return [e, 520]
 
 
 # Function to read and validate the CSV file
@@ -529,7 +526,7 @@ def generate_exam(questions, config_data, exclude_list):
 
         return exam, total_points, difficulty_ratios, total_titles
     except Exception as e:
-        exit(e)
+        return [e, 520]
 
 
 def read_api():
@@ -553,7 +550,7 @@ def read_api():
         exclusion_titles = config['exclusion_titles']
         return api, username, password, exclusion_titles
     except Exception as e:
-        exit(e)
+        return [e, 520]
 
 
 # Main execution flow
