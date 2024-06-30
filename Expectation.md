@@ -2,6 +2,9 @@
 Give the following from nirt servers:
 
 ### REC API
+
+Request Exam Creation
+
 Expects
 `.config` file to be supplied and
 ```json
@@ -25,6 +28,8 @@ REC()
 
 ### RUG API
 
+Request User Generation
+
 Expects
 ```json
 {
@@ -37,7 +42,7 @@ Via API.json file
 Returns
 ```python
 api_send = {
-    "MESSAGE"
+    "MESSAGE (Usually password)"
 }
 ```
 Can be a string or number, if number refer to Codes section.
@@ -48,6 +53,8 @@ um.create_db(username)
 ```
 
 ### RUD API
+
+Request User DB Update
 
 Expects
 ```json
@@ -75,6 +82,8 @@ um.add_exclusion_db(username, exclusion_titles, password)
 
 ### RUR API
 
+Request User Removal
+
 Expects
 ```json
 {
@@ -98,6 +107,7 @@ Code:
 ```
 um.remove(username, password)
 ```
+
 ---
 
 ## Codes
@@ -110,4 +120,10 @@ If a message gives you a number not text, know it's an error code:
 - 500: Internal Server Error - SQLite
 - 520: Unknown error - Caught exception
 
-In your side should be logic to convert these into errors to show in your website.
+CAREFUL from SQL injection, as this is a software that runs on the server using SQLite.
+
+## Server Setup
+
+First Download the server requirements using `pip install -r requirements.txt`
+Then Download the server using `git clone https://github.com/DefinetlyNotAI/Test-generator.git`
+Finally to start the server use `waitress-serve --listen=*:5000 wsgi:app`
