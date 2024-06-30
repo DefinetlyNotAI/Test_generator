@@ -1,12 +1,12 @@
-TODO Add error checks to all, especially test what would happen if users.db doesnt exist, also do more tests
-
-TODO make a website that is clean
-
-TODO Make it that when config and json files are found, RUN DataBase.py
-
 TODO check that cvs file is optional, and can be downloaded
 
-TODO make the flask a non-server
+TODO make all returns html like flask_server.py
+
+TODO Create the api framework for google drive.
+
+TODO Verbosely error check
+
+TODO Change ReadMe
 
 Progress:
 
@@ -14,6 +14,7 @@ Image_integration - 100% (Set up on your end as it's a URL)
 Exclusion Database - 100%
 Excel Exam [Not txt] - 100%
 Student Database - 100%
-API setup - 80%
-Cleaning and Refactoring and error handling - 80%
-Website - 80%
+API setup - 65%
+Cleaning and Refactoring and error handling - 70%
+Website - 90%
+Security and vulnerability scanning - 0%
