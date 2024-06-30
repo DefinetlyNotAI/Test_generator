@@ -6,7 +6,8 @@ Give the following from nirt servers:
 Request Exam Creation
 
 Expects
-`.config` file to be supplied and
+`.config` file to be supplied normally and
+
 ```json
 {
     "api": "REC",
