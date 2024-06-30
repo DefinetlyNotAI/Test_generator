@@ -10,7 +10,7 @@ from configparser import ConfigParser
 import pandas as pd
 
 
-def check_for_exact_list(value):
+def check_for_LIST(value):
     """
     Checks if the input string contains the exact word 'LIST' in uppercase.
 
@@ -44,22 +44,16 @@ class UserManager:
 
     def connect(self):
         """Connects to the SQLite database."""
-        try:
-            if self.conn is None:
-                self.conn = sqlite3.connect(self.db_name)
-                self.cursor = self.conn.cursor()
-        except Exception as e:
-            return f'LIST {e}, 520'
+        if self.conn is None:
+            self.conn = sqlite3.connect(self.db_name)
+            self.cursor = self.conn.cursor()
 
     def disconnect(self):
         """Closes the database connection."""
-        try:
-            if self.conn:
-                self.conn.close()
-                self.conn = None
-                self.cursor = None
-        except Exception as e:
-            return f'LIST {e}, 520'
+        if self.conn:
+            self.conn.close()
+            self.conn = None
+            self.cursor = None
 
     @staticmethod
     def create_db_initial():
@@ -77,31 +71,29 @@ class UserManager:
         Returns:
             None
         """
-        try:
-            # Connect to the SQLite database
-            # This will create the database file if it doesn't already exist
-            conn = sqlite3.connect('users.db')
 
-            # Create a cursor object using the cursor() method
-            cursor = conn.cursor()
+        # Connect to the SQLite database
+        # This will create the database file if it doesn't already exist
+        conn = sqlite3.connect('users.db')
 
-            # Drop the table if it already exists to start fresh
-            cursor.execute('''DROP TABLE IF EXISTS Users;''')
+        # Create a cursor object using the cursor() method
+        cursor = conn.cursor()
 
-            # Create a table named Users with id, username, password, and titles_to_exclude columns
-            cursor.execute('''CREATE TABLE Users (
-                               id INTEGER PRIMARY KEY,
-                               username TEXT NOT NULL UNIQUE,
-                               password TEXT NOT NULL,
-                               titles_to_exclude TEXT);''')
+        # Drop the table if it already exists to start fresh
+        cursor.execute('''DROP TABLE IF EXISTS Users;''')
 
-            # Commit the transaction
-            conn.commit()
+        # Create a table named Users with id, username, password, and titles_to_exclude columns
+        cursor.execute('''CREATE TABLE Users (
+                            id INTEGER PRIMARY KEY,
+                            username TEXT NOT NULL UNIQUE,
+                            password TEXT NOT NULL,
+                            titles_to_exclude TEXT);''')
 
-            # Close the connection
-            conn.close()
-        except Exception as e:
-            return f'LIST {e}, 500'
+        # Commit the transaction
+        conn.commit()
+
+        # Close the connection
+        conn.close()
 
     def verify_password(self, username, password):
         """
@@ -236,8 +228,12 @@ class UserManager:
         """
         try:
             value = um.add_exclusion_db_main(name, titles, password)
+            if check_for_LIST(value):
+                return value
             if not special:
-                um.add_exclusion_db_main(name, ",", password)
+                msg = um.add_exclusion_db_main(name, ",", password)
+                if check_for_LIST(msg):
+                    return msg
             return value
         except Exception as e:
             return f'LIST {e}, 520'
@@ -288,8 +284,15 @@ class UserManager:
         try:
             # Safely accessing the values from the user_data dictionary
             username = data.get('Username', 'Unknown')
+            if check_for_LIST(username):
+                return username
             password = data.get('Password', 'Unknown')
+            if check_for_LIST(password):
+                return username
             exclusion_titles = data.get('Exclusion_titles', [])
+            if isinstance(exclusion_titles, str):
+                if check_for_LIST(exclusion_titles):
+                    return exclusion_titles
 
             return username, password, exclusion_titles
         except Exception as e:
@@ -598,9 +601,26 @@ def exam_generator(username):
     try:
         # Read the CSV file and validate the config file
         questions = read_csv('Test.csv')
+        if isinstance(questions, str):
+            if check_for_LIST(questions):
+                return questions
+
         config_data = read_config('DataBase.config')
+        if isinstance(config_data, str):
+            if check_for_LIST(config_data):
+                return config_data
+
         Exclude_list = um.get_excluded_titles(username)
-        exam, total_points, difficulty_ratios, total_titles = generate_exam(questions, config_data, Exclude_list)
+        if isinstance(Exclude_list, str):
+            if check_for_LIST(Exclude_list):
+                return Exclude_list
+
+        temp = generate_exam(questions, config_data, Exclude_list)
+        if isinstance(temp, str):
+            if check_for_LIST(temp):
+                return temp
+        else:
+            exam, total_points, difficulty_ratios, total_titles = temp
 
         # Check if the file Exam.txt exists
         if os.path.exists('Exam.txt'):
@@ -629,10 +649,9 @@ def exam_generator(username):
 
         time.sleep(1)
 
-        try:
-            create_excel_from_txt(config_data['debug'])
-        except Exception as e:
-            return f'LIST {e}, 520'
+        msg = create_excel_from_txt(config_data['debug'])
+        if check_for_LIST(msg):
+            return msg
 
         return fr'''
         <p>Exam Generated and saved to Exam.xlsx<\p>
@@ -664,7 +683,12 @@ def database_thread():
             This function initializes data based on the selected API, processes it accordingly, and sends the data to Nirt.
             """
             # Initialize the UserManager and API values
-            api, username, password, exclusion_titles = read_api()
+            temp = read_api()
+            if isinstance(temp, str):
+                if check_for_LIST(temp):
+                    return temp
+            else:
+                api, username, password, exclusion_titles = temp
 
             if api == "REC":
                 DATA = REC(username)
@@ -680,7 +704,10 @@ def database_thread():
             return DATA
 
         # Main startup
-        return init()
+        msg = init()
+        if check_for_LIST(msg):
+            return msg
+
     except Exception as e:
         return f'LIST {e}, 520'
 
