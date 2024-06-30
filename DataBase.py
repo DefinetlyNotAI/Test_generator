@@ -32,7 +32,7 @@ class UserManager:
                 self.conn = sqlite3.connect(self.db_name)
                 self.cursor = self.conn.cursor()
         except Exception as e:
-            return [e, 520]
+            return f'LIST {e}, 520'
 
     def disconnect(self):
         """Closes the database connection."""
@@ -42,7 +42,7 @@ class UserManager:
                 self.conn = None
                 self.cursor = None
         except Exception as e:
-            return [e, 520]
+            return f'LIST {e}, 520'
 
     @staticmethod
     def create_db_initial():
@@ -84,7 +84,7 @@ class UserManager:
             # Close the connection
             conn.close()
         except Exception as e:
-            return [e, 500]
+            return f'LIST {e}, 500]'
 
     def verify_password(self, username, password):
         """
@@ -131,7 +131,7 @@ class UserManager:
 
             return password_str
         except Exception as e:
-            return [e, 500]
+            return f'LIST {e}, 500]'
 
     def remove(self, username, password):
         """
@@ -147,7 +147,7 @@ class UserManager:
             else:
                 return ["Incorrect password.", 401]
         except Exception as e:
-            return [e, 500]
+            return f'LIST {e}, 500]'
 
     def add_exclusion_db_main(self, name, titles, password):
         """
@@ -187,11 +187,11 @@ class UserManager:
                         return ["No new titles to add.", 400]
 
                 except Exception as e:
-                    return [e, 500]
+                    return f'LIST {e}, 500]'
             else:
                 return ["Incorrect password.", 401]
         except Exception as e:
-            return [e, 520]
+            return f'LIST {e}, 520]'
 
     @staticmethod
     def add_exclusion_db(name, titles, password, special=None):
@@ -223,7 +223,7 @@ class UserManager:
                 um.add_exclusion_db_main(name, ",", password)
             return value
         except Exception as e:
-            return [e, 520]
+            return f'LIST {e}, 520]'
 
     def get_excluded_titles(self, username):
         """
@@ -253,7 +253,7 @@ class UserManager:
 
             return titles_to_exclude
         except Exception as e:
-            return [e, 520]
+            return f'LIST {e}, 520]'
 
     @staticmethod
     def extract_user_info(data):
@@ -276,7 +276,7 @@ class UserManager:
 
             return username, password, exclusion_titles
         except Exception as e:
-            return [e, 520]
+            return f'LIST {e}, 520]'
 
 
 # Function to read and validate the CSV file
@@ -335,7 +335,7 @@ def read_csv(file_path):
     except FileNotFoundError as fnfe:
         return [fnfe, 404]
     except Exception as e:
-        return [e, 520]
+        return f'LIST {e}, 520]'
 
 
 # Function to read and validate the config file
@@ -390,7 +390,7 @@ def read_config(file_path):
     except FileNotFoundError as fnfe:
         return [fnfe, 404]
     except Exception as e:
-        return [e, 520]
+        return f'LIST {e}, 520]'
 
 
 def create_excel_from_txt(debug):
@@ -441,7 +441,7 @@ def create_excel_from_txt(debug):
     except FileExistsError as fnfe:
         return [fnfe, 409]
     except Exception as e:
-        return [e, 520]
+        return f'LIST {e}, 520]'
 
 
 # Function to generate the exam
@@ -522,7 +522,7 @@ def generate_exam(questions, config_data, exclude_list):
 
         return exam, total_points, difficulty_ratios, total_titles
     except Exception as e:
-        return [e, 520]
+        return f'LIST {e}, 520]'
 
 
 def read_api():
@@ -546,7 +546,7 @@ def read_api():
         exclusion_titles = config['exclusion_titles']
         return api, username, password, exclusion_titles
     except Exception as e:
-        return [e, 520]
+        return f'LIST {e}, 520]'
 
 
 # Main execution flow
@@ -615,7 +615,7 @@ def exam_generator(username):
         try:
             create_excel_from_txt(config_data['debug'])
         except Exception as e:
-            return [e, 520]
+            return f'LIST {e}, 520]'
 
         return fr'''
         <p>Exam Generated and saved to Exam.xlsx<\p>
@@ -627,7 +627,7 @@ def exam_generator(username):
         '''
 
     except Exception as e:
-        return [e, 520]
+        return f'LIST {e}, 520]'
 
 
 def database_thread():
@@ -640,7 +640,7 @@ def database_thread():
             try:
                 return exam_generator(username)
             except Exception as e:
-                return [e, 520]
+                return f'LIST {e}, 520]'
 
         def init():
             """
@@ -665,7 +665,7 @@ def database_thread():
         # Main startup
         return init()
     except Exception as e:
-        return [e, 520]
+        return f'LIST {e}, 520]'
 
 
 um = UserManager(db_name='users.db')
