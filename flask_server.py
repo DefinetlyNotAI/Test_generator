@@ -1,7 +1,17 @@
 from flask import Flask, request, render_template
 import os
+from DataBase import *
 
 app = Flask(__name__)
+
+err_codes = {
+    400: "Bad Request - Failed to access database",
+    401: "Unauthorized Access - Incorrect password",
+    404: "Not found - API request not correct/not found",
+    409: "Conflict - Already exists",
+    500: "Internal Server Error - SQLite",
+    520: "Unknown error - Caught exception"
+}
 
 
 @app.route('/')
@@ -44,14 +54,20 @@ def upload_file():
             api_file.save(api_path)
 
             # Return an HTML success message
-            return "<html><body><h1>Success</h1><p>Both files were uploaded and saved successfully.</p></body></html>"
+            if os.path.exists('Database.config') and os.path.exists('API.json'):
+                message = database_thread()
+                if message is list:
+                    return f"<html><body><h1>Error</h1><h2>Error Number: {message}</h2><p>{err_codes[message]}</p></body></html>", message
+                else:
+                    return f"<html><body><h1>Success</h1><p>{message}</p></body></html>", 200
+
         else:
             # Return an HTML error message with an error number
-            return "<html><body><h1>Error</h1><h2>Error Number: 400</h2><p>Both Database.config and API.json files are required and cannot be empty.</p></body></html>"
+            return "<html><body><h1>Error</h1><h2>Error Number: 400</h2><p>Both Database.config and API.json files are required and cannot be empty.</p></body></html>", 400
     else:
         # Return an HTML error message with an error number
-        return "<html><body><h1>Error</h1><h2>Error Number: 400</h2><p>Both Database.config and API.json files are required.</p></body></html>"
+        return "<html><body><h1>Error</h1><h2>Error Number: 400</h2><p>Both Database.config and API.json files are required.</p></body></html>", 400
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)), debug=False)
