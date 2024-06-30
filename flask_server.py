@@ -57,16 +57,16 @@ def upload_file():
             if os.path.exists('Database.config') and os.path.exists('API.json'):
                 message = database_thread()
                 if message is list:
-                    return f"<html><body><h1>Error</h1><h2>Error Number: {message}</h2><p>{err_codes[message]}</p></body></html>", message
+                    return f"<html><body><h1>Error</h1><h2>Error Number: {message[0]}</h2><p>{message[0]}</p><p>{err_codes[message[1]]}</p></body></html>", message[1]
                 else:
-                    return f"<html><body><h1>Success</h1><p>{message}</p></body></html>", 200
+                    return f"<html><body><h1>Success</h1>{message}</body></html>", 200
 
         else:
             # Return an HTML error message with an error number
-            return "<html><body><h1>Error</h1><h2>Error Number: 400</h2><p>Both Database.config and API.json files are required and cannot be empty.</p></body></html>", 400
+            return f"<html><body><h1>Error</h1><h2>Error Number: 400</h2><p>Both Database.config and API.json files are required and cannot be empty.</p><p>{err_codes[400]}</p></body></html>", 400
     else:
         # Return an HTML error message with an error number
-        return "<html><body><h1>Error</h1><h2>Error Number: 400</h2><p>Both Database.config and API.json files are required.</p></body></html>", 400
+        return f"<html><body><h1>Error</h1><h2>Error Number: 400</h2><p>Both Database.config and API.json files are required.</p><p>{err_codes[400]}</p></body></html>", 400
 
 
 if __name__ == '__main__':
