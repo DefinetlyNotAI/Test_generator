@@ -1,9 +1,3 @@
-TODO check that cvs file is optional, and can be downloaded
-
-TODO make all returns html like flask_server.py
-
-TODO Create the api framework for google drive.
-
 TODO Verbosely error check
     Database Operations
     Connection Errors: Any issues related to the SQLite database connection, such as network problems or permissions issues, could cause errors.
@@ -35,7 +29,7 @@ Image_integration - 100% (Set up on your end as it's a URL)
 Exclusion Database - 100%
 Excel Exam [Not txt] - 100%
 Student Database - 100%
-API setup - 65%
-Cleaning and Refactoring and error handling - 60%
-Website - 80%
+API setup - 70%
+Cleaning and Refactoring and error handling - 0%
+Website - 70%
 Security and vulnerability scanning - 100% (8 errors closed)
