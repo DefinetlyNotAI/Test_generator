@@ -357,11 +357,7 @@ def read_config(file_path):
             - 'debug' (bool): Whether to print debug messages or not.
 
     Raises:
-        ValueError: If the configuration file does not contain exactly one section.
-        ValueError: If any of the required options are missing in the configuration file.
-        ValueError: If the sum of the difficulty levels does not equal the total questions amount.
-        ValueError: If the 'points' value is not an integer.
-        ValueError: If the 'debug' value is not a boolean.
+        ValueError: If the configuration file is invalid or missing required options.
     """
     try:
         config = ConfigParser()
