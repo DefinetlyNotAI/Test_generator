@@ -56,14 +56,26 @@ def upload_file():
             # Return an HTML success message
             if os.path.exists('Database.config') and os.path.exists('API.json'):
                 message = database_thread()
-                if message.startswith('[') and message.endswith(']'):
-                    # Remove the first and last characters, then split the remaining string into a list
-                    # This example splits by space, adjust as needed if your elements are separated differently
-                    message_list = message[1:-1].split()
-                    return f"<html><body><h1>Error</h1><h2>Error Number: {message_list[0]}</h2><p>{message_list[0]}</p><p>{err_codes[message_list[1]]}</p></body></html>", message_list[1]
+                if message.startswith('LIST'):
+                    # Removing 'LIST' from the beginning of the message
+                    message = message.replace('LIST', '', 1)
+
+                    # Splitting the message by comma to create a list
+                    message_list = message.split(',')
+
+                    # Using the second element as the error number and the first element as the code message
+                    error_number = int(message_list[1].strip())
+                    error_message_key = message_list[0].strip() if len(message_list) > 1 else None
+
+                    # Checking if the error number exists in err_codes
+                    if error_number in err_codes:
+                        # Returning an HTML response with the error number and corresponding message
+                        return f"<html><body><h1>Error</h1><h2>Error Number: {error_number}</h2><p>{error_message_key}</p><p>{err_codes[error_number]}</p></body></html>", error_number
+                    else:
+                        # Returning an HTML response for unknown errors
+                        return f"<html><body><h1>Error</h1><h2>Error Number: 501</h2><p>Unknown error - Not Defined</p></body></html>", 501
                 else:
                     return f"<html><body><h1>Success</h1>{message}</body></html>", 200
-
         else:
             # Return an HTML error message with an error number
             return f"<html><body><h1>Error</h1><h2>Error Number: 400</h2><p>Both Database.config and API.json files are required and cannot be empty.</p><p>{err_codes[400]}</p></body></html>", 400

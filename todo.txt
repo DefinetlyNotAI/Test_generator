@@ -38,4 +38,4 @@ Student Database - 100%
 API setup - 65%
 Cleaning and Refactoring and error handling - 60%
 Website - 80%
-Security and vulnerability scanning - 10%
+Security and vulnerability scanning - 100% (8 errors closed)
