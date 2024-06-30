@@ -10,6 +10,23 @@ from configparser import ConfigParser
 import pandas as pd
 
 
+def check_for_exact_list(value):
+    """
+    Checks if the input string contains the exact word 'LIST' in uppercase.
+
+    Parameters:
+    - value (str): The string to check.
+
+    Returns:
+    - bool: True if 'LIST' is found exactly as is in the string, False otherwise.
+    """
+    words = value.split()
+    for word in words:
+        if word == 'LIST':
+            return True
+    return False
+
+
 class UserManager:
     def __init__(self, db_name='users.db'):
         """
@@ -84,7 +101,7 @@ class UserManager:
             # Close the connection
             conn.close()
         except Exception as e:
-            return f'LIST {e}, 500]'
+            return f'LIST {e}, 500'
 
     def verify_password(self, username, password):
         """
@@ -115,7 +132,7 @@ class UserManager:
             self.disconnect()
 
             if existing_user:
-                return ["Username already exists.", 409]
+                return "LIST Username already exists., 409"
 
             alphabet = string.ascii_letters + string.digits
             password_new = ''.join(secrets.choice(alphabet) for _ in range(12))
@@ -131,7 +148,7 @@ class UserManager:
 
             return password_str
         except Exception as e:
-            return f'LIST {e}, 500]'
+            return f'LIST {e}, 500'
 
     def remove(self, username, password):
         """
@@ -145,9 +162,9 @@ class UserManager:
                 self.disconnect()
                 return f"Successfully removed data for user {username}."
             else:
-                return ["Incorrect password.", 401]
+                return "LIST Incorrect password., 401"
         except Exception as e:
-            return f'LIST {e}, 500]'
+            return f'LIST {e}, 500'
 
     def add_exclusion_db_main(self, name, titles, password):
         """
@@ -184,12 +201,12 @@ class UserManager:
                         self.conn.commit()
                         return f"Successfully updated titles for user {name}."
                     else:
-                        return ["No new titles to add.", 400]
+                        return "LIST No new titles to add., 400"
 
                 except Exception as e:
-                    return f'LIST {e}, 500]'
+                    return f'LIST {e}, 500'
             else:
-                return ["Incorrect password.", 401]
+                return "LIST Incorrect password., 401"
         except Exception as e:
             return f'LIST {e}, 520]'
 
@@ -223,7 +240,7 @@ class UserManager:
                 um.add_exclusion_db_main(name, ",", password)
             return value
         except Exception as e:
-            return f'LIST {e}, 520]'
+            return f'LIST {e}, 520'
 
     def get_excluded_titles(self, username):
         """
@@ -253,7 +270,7 @@ class UserManager:
 
             return titles_to_exclude
         except Exception as e:
-            return f'LIST {e}, 520]'
+            return f'LIST {e}, 520'
 
     @staticmethod
     def extract_user_info(data):
@@ -276,7 +293,7 @@ class UserManager:
 
             return username, password, exclusion_titles
         except Exception as e:
-            return f'LIST {e}, 520]'
+            return f'LIST {e}, 520'
 
 
 # Function to read and validate the CSV file
@@ -313,17 +330,17 @@ def read_csv(file_path):
 
                 # Use a generator expression to strip values and check for emptiness across the specified indices
                 if not all(value.strip() for value in (row[i] for i in indices_to_check)):
-                    return ["Empty value found in CSV.", 400]
+                    return "LIST Empty value found in CSV., 400"
 
                 difficulty = row[2].strip()
                 if difficulty not in ['Hard', 'Medium', 'Easy']:
-                    return [f"Invalid difficulty level at line {reader.line_num}: {difficulty}.", 400]
+                    return f"LIST Invalid difficulty level at line {reader.line_num}: {difficulty}., 400"
                 try:
                     score = int(row[3].strip())
                 except ValueError:
-                    return [f"Invalid score format at line {reader.line_num}: {row[3]}.", 400]
+                    return f"LIST Invalid score format at line {reader.line_num}: {row[3]}., 400"
                 if not 0 <= score <= 100:
-                    return [f"Invalid score range at line {reader.line_num}: {score}.", 400]
+                    return f"LIST Invalid score range at line {reader.line_num}: {score}., 400"
 
                 # Adjusted to allow the URL column to be empty
                 url_column_index = 4  # Assuming the URL is in the 5th column (index starts at 0)
@@ -333,9 +350,9 @@ def read_csv(file_path):
                     [*row[:url_column_index], url])  # Append the row with the URL if present, otherwise append None
         return questions
     except FileNotFoundError as fnfe:
-        return [fnfe, 404]
+        return f"LIST {fnfe}, 404"
     except Exception as e:
-        return f'LIST {e}, 520]'
+        return f'LIST {e}, 520'
 
 
 # Function to read and validate the config file
@@ -364,20 +381,20 @@ def read_config(file_path):
         config.read(file_path)
         sections = config.sections()
         if len(sections) != 1:
-            return ["Config file must contain exactly one section.", 400]
+            return "LIST Config file must contain exactly one section., 400"
         section = sections[0]
         options = config.options(section)
         required_options = ['questions_amount', 'minimum_titles', 'hard', 'medium', 'easy', 'points', 'debug']
         missing_options = [option for option in required_options if option not in options]
         if missing_options:
-            return [f"Missing required options in config file: {missing_options}", 400]
+            return f"LIST Missing required options in config file: {missing_options}, 400"
         for option in required_options[:-2]:  # Exclude 'debug' and 'points' from this check
             try:
                 int(config.get(section, option))
             except ValueError:
-                return [f"Invalid value type for {option}: expected integer.", 400]
+                return f"LIST Invalid value type for {option}: expected integer., 400"
         if config.getint(section, 'hard') + config.getint(section, 'medium') + config.getint(section, 'easy') != config.getint(section, 'questions_amount'):
-            return ["The sum of hard, medium, and easy questions must equal the total questions amount.", 400]
+            return "LIST The sum of hard, medium, and easy questions must equal the total questions amount., 400"
         return {
             'questions_amount': config.getint(section, 'questions_amount'),
             'minimum_titles': config.getint(section, 'minimum_titles'),
@@ -388,9 +405,9 @@ def read_config(file_path):
             'debug': config.getboolean(section, 'debug')
         }
     except FileNotFoundError as fnfe:
-        return [fnfe, 404]
+        return f"LIST {fnfe}, 404"
     except Exception as e:
-        return f'LIST {e}, 520]'
+        return f'LIST {e}, 520'
 
 
 def create_excel_from_txt(debug):
@@ -439,9 +456,9 @@ def create_excel_from_txt(debug):
 
         os.remove('Exam.txt')
     except FileExistsError as fnfe:
-        return [fnfe, 409]
+        return f"LIST {fnfe}, 409"
     except Exception as e:
-        return f'LIST {e}, 520]'
+        return f'LIST {e}, 520'
 
 
 # Function to generate the exam
@@ -464,7 +481,7 @@ def generate_exam(questions, config_data, exclude_list):
                 # Retry if a questions' list is empty
                 questions = read_csv('Test.csv')
                 if not questions:
-                    return ["Failed to load questions from CSV file.", 500]
+                    return "LIST Failed to load questions from CSV file., 500"
 
             exam = []
             total_points = 0
@@ -522,7 +539,7 @@ def generate_exam(questions, config_data, exclude_list):
 
         return exam, total_points, difficulty_ratios, total_titles
     except Exception as e:
-        return f'LIST {e}, 520]'
+        return f'LIST {e}, 520'
 
 
 def read_api():
@@ -546,7 +563,7 @@ def read_api():
         exclusion_titles = config['exclusion_titles']
         return api, username, password, exclusion_titles
     except Exception as e:
-        return f'LIST {e}, 520]'
+        return f'LIST {e}, 520'
 
 
 # Main execution flow
@@ -615,7 +632,7 @@ def exam_generator(username):
         try:
             create_excel_from_txt(config_data['debug'])
         except Exception as e:
-            return f'LIST {e}, 520]'
+            return f'LIST {e}, 520'
 
         return fr'''
         <p>Exam Generated and saved to Exam.xlsx<\p>
@@ -627,7 +644,7 @@ def exam_generator(username):
         '''
 
     except Exception as e:
-        return f'LIST {e}, 520]'
+        return f'LIST {e}, 520'
 
 
 def database_thread():
@@ -640,7 +657,7 @@ def database_thread():
             try:
                 return exam_generator(username)
             except Exception as e:
-                return f'LIST {e}, 520]'
+                return f'LIST {e}, 520'
 
         def init():
             """
@@ -658,14 +675,14 @@ def database_thread():
             elif api == "RUR":
                 DATA = um.remove(username, password)
             else:
-                DATA = ["Invalid API", 404]
+                DATA = "LIST Invalid API, 404"
 
             return DATA
 
         # Main startup
         return init()
     except Exception as e:
-        return f'LIST {e}, 520]'
+        return f'LIST {e}, 520'
 
 
 um = UserManager(db_name='users.db')
