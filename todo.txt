@@ -5,6 +5,25 @@ TODO make all returns html like flask_server.py
 TODO Create the api framework for google drive.
 
 TODO Verbosely error check
+    Database Operations
+    Connection Errors: Any issues related to the SQLite database connection, such as network problems or permissions issues, could cause errors.
+    Non-existent Database: If the database file (users.db) does not exist when attempting to connect or perform operations without initializing it first.
+    Incorrect Username or Password: In methods like verify_password, create_db, and remove, incorrect credentials could lead to failed authentication attempts.
+    Duplicate Usernames: Attempting to create a user with a username that already exists in the database, as seen in the create_db method.
+    Database Connection Issues: Any issues related to the SQLite database connection, such as network problems or permissions issues, could cause errors.
+    File Handling
+    CSV File Format Errors: The read_csv function assumes a specific format for the CSV file. Any deviation from this format (e.g., missing columns, unexpected data types) could lead to errors.
+    File Not Found: Attempting to read or write files that do not exist or are inaccessible due to permissions issues.
+    JSON Parsing Errors: The read_api function expects a JSON file with specific keys. Missing keys or malformed JSON could cause parsing errors.
+    Logic and Data Validation
+    Invalid Configuration Values: The read_config function expects certain configuration parameters to be integers or booleans. Providing non-integer values for numeric fields or non-boolean values for the debug field could cause errors.
+    Inconsistent Data Types: Functions like extract_user_info expect specific data types for input. Providing data of incorrect types (e.g., passing a string where a dictionary is expected) could lead to errors.
+    Logic Errors in Question Filtering: The generate_exam function relies on specific conditions being met (e.g., total points matching the required points). Failing these conditions could lead to infinite loops or incorrect exam generation.
+    External Dependencies
+    External Libraries Not Installed: The code uses several external libraries (csv, json, sqlite3, random, secrets, string, time, pandas). If these libraries are not installed in the environment where the script runs, it will fail.
+    Environment-Specific Issues: Depending on the operating system and Python version, there might be compatibility issues or missing dependencies.
+    General Error Handling
+    Unhandled Exceptions: The code uses broad exception handling (e.g., except Exception as e). While this catches many errors, it can sometimes obscure the root cause of issues, making debugging difficult.
 
 TODO Change ReadMe
 
@@ -15,6 +34,6 @@ Exclusion Database - 100%
 Excel Exam [Not txt] - 100%
 Student Database - 100%
 API setup - 65%
-Cleaning and Refactoring and error handling - 70%
-Website - 90%
-Security and vulnerability scanning - 0%
+Cleaning and Refactoring and error handling - 60%
+Website - 80%
+Security and vulnerability scanning - 10%
