@@ -313,17 +313,17 @@ def read_csv(file_path):
 
                 # Use a generator expression to strip values and check for emptiness across the specified indices
                 if not all(value.strip() for value in (row[i] for i in indices_to_check)):
-                    raise ValueError("Empty value found in CSV.")
+                    return ["Empty value found in CSV.", 400]
 
                 difficulty = row[2].strip()
                 if difficulty not in ['Hard', 'Medium', 'Easy']:
-                    raise ValueError(f"Invalid difficulty level at line {reader.line_num}: {difficulty}.")
+                    return [f"Invalid difficulty level at line {reader.line_num}: {difficulty}.", 400]
                 try:
                     score = int(row[3].strip())
                 except ValueError:
-                    raise ValueError(f"Invalid score format at line {reader.line_num}: {row[3]}.")
+                    return [f"Invalid score format at line {reader.line_num}: {row[3]}.", 400]
                 if not 0 <= score <= 100:
-                    raise ValueError(f"Invalid score range at line {reader.line_num}: {score}.")
+                    return [f"Invalid score range at line {reader.line_num}: {score}.", 400]
 
                 # Adjusted to allow the URL column to be empty
                 url_column_index = 4  # Assuming the URL is in the 5th column (index starts at 0)
@@ -368,20 +368,20 @@ def read_config(file_path):
         config.read(file_path)
         sections = config.sections()
         if len(sections) != 1:
-            raise ValueError("Config file must contain exactly one section.")
+            return ["Config file must contain exactly one section.", 400]
         section = sections[0]
         options = config.options(section)
         required_options = ['questions_amount', 'minimum_titles', 'hard', 'medium', 'easy', 'points', 'debug']
         missing_options = [option for option in required_options if option not in options]
         if missing_options:
-            raise ValueError(f"Missing required options in config file: {missing_options}")
+            return [f"Missing required options in config file: {missing_options}", 400]
         for option in required_options[:-2]:  # Exclude 'debug' and 'points' from this check
             try:
                 int(config.get(section, option))
             except ValueError:
-                raise ValueError(f"Invalid value type for {option}: expected integer.")
+                return [f"Invalid value type for {option}: expected integer.", 400]
         if config.getint(section, 'hard') + config.getint(section, 'medium') + config.getint(section, 'easy') != config.getint(section, 'questions_amount'):
-            raise ValueError("The sum of hard, medium, and easy questions must equal the total questions amount.")
+            return ["The sum of hard, medium, and easy questions must equal the total questions amount.", 400]
         return {
             'questions_amount': config.getint(section, 'questions_amount'),
             'minimum_titles': config.getint(section, 'minimum_titles'),
@@ -468,7 +468,7 @@ def generate_exam(questions, config_data, exclude_list):
                 # Retry if a questions' list is empty
                 questions = read_csv('Test.csv')
                 if not questions:
-                    raise ValueError("Failed to load questions from CSV file.")
+                    return ["Failed to load questions from CSV file.", 500]
 
             exam = []
             total_points = 0
