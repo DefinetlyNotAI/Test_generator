@@ -25,6 +25,8 @@ TODO Verbosely error check
     General Error Handling
     Unhandled Exceptions: The code uses broad exception handling (e.g., except Exception as e). While this catches many errors, it can sometimes obscure the root cause of issues, making debugging difficult.
 
+TODO Remove and then re-add docstrings back
+
 TODO Change ReadMe
 
 Progress:

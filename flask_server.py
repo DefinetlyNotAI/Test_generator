@@ -56,8 +56,11 @@ def upload_file():
             # Return an HTML success message
             if os.path.exists('Database.config') and os.path.exists('API.json'):
                 message = database_thread()
-                if message is list:
-                    return f"<html><body><h1>Error</h1><h2>Error Number: {message[0]}</h2><p>{message[0]}</p><p>{err_codes[message[1]]}</p></body></html>", message[1]
+                if message.startswith('[') and message.endswith(']'):
+                    # Remove the first and last characters, then split the remaining string into a list
+                    # This example splits by space, adjust as needed if your elements are separated differently
+                    message_list = message[1:-1].split()
+                    return f"<html><body><h1>Error</h1><h2>Error Number: {message_list[0]}</h2><p>{message_list[0]}</p><p>{err_codes[message_list[1]]}</p></body></html>", message_list[1]
                 else:
                     return f"<html><body><h1>Success</h1>{message}</body></html>", 200
 
