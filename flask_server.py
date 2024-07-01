@@ -61,7 +61,7 @@ def upload_file():
                     message = message.replace('LIST', '', 1)
 
                     # Splitting the message by comma to create a list
-                    message_list = message.split(',')
+                    message_list = message.split('&&')
 
                     # Using the second element as the error number and the first element as the code message
                     error_number = int(message_list[1].strip())
