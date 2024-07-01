@@ -1,6 +1,6 @@
-# Contributing to Logicytics
+# Contributing to Exam-Generator
 
-Looking to contribute something to Logicytics? **Here's how you can help.**
+Looking to contribute something to Exam-Generator? **Here's how you can help.**
 
 Please take a moment to review this document to make the contribution
 process easy and effective for everyone involved.
@@ -47,7 +47,7 @@ leave the Explain.md file and the updating of the structure file to me.
 
 ## Guidelines for Modifications 📃
 
-When making modifications to the Logicytics project,
+When making modifications to the Exam-Generator project,
 please adhere to the following guidelines to ensure consistency and maintainability:
 
 ### Documentation and Credit
@@ -67,10 +67,6 @@ please adhere to the following guidelines to ensure consistency and maintainabil
 - **New Files for New Features**: When adding new features, create a separate file for each feature.
   
 - **Root Folders**: Refrain from modifying root folders such as `.github` or `.git`. Maintain the integrity of the project's directory structure.
-
-### Must Do's
-
-- **CREDIT.md**: Ensure that the `CREDIT.md` file has been properly updated.
 
 ## Issues and labels 🛠️
 
