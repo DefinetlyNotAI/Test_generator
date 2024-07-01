@@ -38,27 +38,27 @@ def upload_file():
     api_file = request.files['API.json']
     csv_file = request.files['Test.csv']
 
-    if os.path.exists('Database.config') and os.path.exists('API.json') and os.path.exists('Test.csv'):
-        if config_file.filename != '' and api_file.filename != '' and csv_file.filename != '':
-            # Define the path for saving the files in the current working directory
-            base_path = os.path.dirname(os.path.abspath(__file__))
-            config_path = os.path.join(base_path, 'Database.config')
-            api_path = os.path.join(base_path, 'API.json')
-            csv_file_path = os.path.join(base_path, 'Test.csv')
+    if config_file.filename != '' and api_file.filename != '' and csv_file.filename != '':
+        # Define the path for saving the files in the current working directory
+        base_path = os.path.dirname(os.path.abspath(__file__))
+        config_path = os.path.join(base_path, 'Database.config')
+        api_path = os.path.join(base_path, 'API.json')
+        csv_file_path = os.path.join(base_path, 'Test.csv')
 
-            # Replace any existing files
-            if os.path.exists(config_path):
-                os.remove(config_path)
-            if os.path.exists(api_path):
-                os.remove(api_path)
-            if os.path.exists(csv_file_path):
-                os.remove(csv_file_path)
+        # Replace any existing files
+        if os.path.exists(config_path):
+            os.remove(config_path)
+        if os.path.exists(api_path):
+            os.remove(api_path)
+        if os.path.exists(csv_file_path):
+            os.remove(csv_file_path)
 
-            # Save the new files
-            config_file.save(config_path)
-            api_file.save(api_path)
-            csv_file.save(csv_file_path)
+        # Save the new files
+        config_file.save(config_path)
+        api_file.save(api_path)
+        csv_file.save(csv_file_path)
 
+        if os.path.exists('Database.config') and os.path.exists('API.json') and os.path.exists('Test.csv'):
             # Return an HTML success message
             message = database_thread()
             if message.startswith('LIST'):
