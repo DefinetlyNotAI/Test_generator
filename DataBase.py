@@ -7,7 +7,6 @@ import sqlite3
 import string
 import time
 from configparser import ConfigParser
-
 import pandas as pd
 
 
@@ -271,9 +270,7 @@ def read_config(file_path):
                 int(config.get(section, option))
             except ValueError:
                 return f"LIST Invalid value type for {option}: expected integer. && 400"
-        if config.getint(section, 'hard') + config.getint(section, 'medium') + config.getint(section,
-                                                                                             'easy') != config.getint(
-                section, 'questions_amount'):
+        if config.getint(section, 'hard') + config.getint(section, 'medium') + config.getint(section, 'easy') != config.getint(section, 'questions_amount'):
             return "LIST The sum of hard, medium, and easy questions must equal the total questions amount. && 400"
         return {
             'questions_amount': config.getint(section, 'questions_amount'),
