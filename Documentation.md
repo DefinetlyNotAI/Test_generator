@@ -4,31 +4,49 @@ Welcome to the comprehensive guide for the **Exam Maker** API Framework This doc
 
 ## Table of Contents 🔍
 
-- [Introduction](#introduction)
-- [File Formats](#file-formats)
-  - [JSON](#json-format)
-  - [CSV](#csv-format)
-  - [Configuration Files (.config)](#configuration-files-config)
-- [Database Expectations API](#database-expectations-api)
-  - [REC API](#rec-api)
-  - [RUG API](#rug-api)
-  - [RUD API](#rud-api)
-  - [RUR API](#rur-api)
-- [Error Codes](#error-codes)
-- [Framework Setup](#framework-setup)
-- [Server Setup](#server-setup)
-  - [Vulnerability Scanning Setup](#vulnerability-scanning-setup)
-    - [PIPX Installation](#pipx-installation)
-    - [GGShield Installation](#ggshield-installation)
-    - [GGShield Scan](#ggshield-scan)
+- [Introduction](#introduction-)
+- [Integration](#integration-)
+- [File Formats](#file-formats-)
+  - [JSON](#json-format-)
+  - [CSV](#csv-format-)
+  - [Configuration Files (.config)](#configuration-files-config-)
+- [Database Expectations API](#database-expectations-api-)
+  - [REC API](#rec-api-)
+  - [RUG API](#rug-api-)
+  - [RUD API](#rud-api-)
+  - [RUR API](#rur-api-)
+- [Error Codes](#error-codes-)
+- [Framework Setup](#framework-setup-)
+- [Server Setup](#server-setup-)
+  - [Vulnerability Scanning Setup](#vulnerability-scanning-setup-)
+    - [PIPX Installation](#pipx-installation-)
+    - [GGShield Installation](#ggshield-installation-)
+    - [GGShield Scan](#ggshield-scan-)
 
-## Introduction
+## Introduction 🌟
 
-🌟 The **Exam Maker** API Framework is designed to streamline the process of creating and managing exams. It supports various file formats and offers a range of APIs for database interactions. This guide will walk you through setting up and using the framework effectively.
+The **Exam Maker** API Framework is designed to streamline the process of creating and managing exams.
+It supports various file formats and offers a range of APIs for database interactions.
+This guide will walk you through setting up and using the framework effectively.
 
-## File Formats
+## Integration 🛠️
 
-### JSON Format
+The framework integrates with other tools and services to ensure that it is easy to use. 
+For example, it can be used to generate exam questions, manage exam databases, and distribute exams.
+
+To use this do the following steps:
+1) Clone the repository: `git clone https://github.com/DefinetlyNotAI/Test-generator.git`
+2) Open a terminal and install dependencies: `pip install -r requirements.txt`
+3) Move the API directory to your other WEB server.
+4) Make the other WEB server initiate the framework `API_FrameWork.py` as well as generate and create the following files:
+   - `Test.csv`: This should be made from a person, and include your questions
+   - `API.json`: This should be dynamically changed as it decides what the server should do, check [Table of contents](#table-of-contents-) for more details.
+   - `db.config`: This should rarely change and be made from a person, it decides the exam generation parameters.
+5) Now you can use the framework to create, manage, and distribute exams by executing `waitress-serve --listen=*:5000 wsgi_server:app`.
+
+## File Formats 📃
+
+### JSON Format 🦾
 
 The JSON file format is structured as follows:
 
@@ -41,7 +59,7 @@ The JSON file format is structured as follows:
 }
 ```
 
-### CSV Format
+### CSV Format 📃
 
 The CSV file format includes headers such as:
 
@@ -50,7 +68,7 @@ The CSV file format includes headers such as:
 - Difficulty Level (Easy, Medium, Hard)
 - Score
 
-### Configuration Files (.config)
+### Configuration Files (.config) 👨‍💻
 
 Configuration files allow customization of exam settings, including:
 
@@ -65,11 +83,12 @@ points=10
 debug=0
 ```
 
-## Database Expectations API
+## Database Expectations API 🗂️
 
-🗂️ The framework interacts with databases through several APIs, including REC, RUG, RUD, and RUR. Each API has specific requirements and returns data in structured formats.
+The framework interacts with databases through several APIs, including REC, RUG, RUD, and RUR.
+Each API has specific requirements and returns data in structured formats.
 
-### REC API
+### REC API 🧠
 
 Request Exam Creation
 
@@ -80,9 +99,9 @@ If debug is true, the headers would be ['URL', 'Question', 'Title', 'Difficulty'
 
 **Returns WEB UI:-**
 It will also return either one of 2 scenarios, If an error occurs, 
-it makes it return an error code in html unless using the framework where it will return it in JSON.
+it makes it return an error code in html unless using the framework where it will return it in text.
 OR if everything works fine it will return a confirmation message in html,
-unless using the framework where it will return it in JSON.
+unless using the framework where it will return it in text.
 
 **Required Format:-**
 API.json file format should be at minimum:
@@ -95,7 +114,7 @@ Disclaimer:
 URL is the URL of the question's image (If not there, it would be None).
 You may develop an API to communicate with an Image Hosting Platform to convert the URL to an image.
 
-### RUG API
+### RUG API 👤
 
 Request User Generation
 
@@ -112,15 +131,15 @@ API.json file format should be at minimum:
     "username": "REPLACE_WITH_USERNAME",
 }
 
-### RUD API
+### RUD API 🔝
 
 Request User DB Update
 
 **Returns:-**
 It will also return either one of 2 scenarios, If an error occurs, 
-it makes it return an error code in html unless using the framework where it will return it in JSON.
+it makes it return an error code in html unless using the framework where it will return it in text.
 OR if everything works fine it will return a confirmation message in html,
-unless using the framework where it will return it in JSON.
+unless using the framework where it will return it in text.
 
 **Required Format:-**
 API.json file format should be at minimum:
@@ -131,15 +150,15 @@ API.json file format should be at minimum:
     "exclusion_titles": "REPLACE_WITH_EXCLUSION_1", "REPLACE_WITH_EXCLUSION_2"
 }
 
-### RUR API
+### RUR API 🚫
 
 Request User Removal
 
 **Returns:-**
 It will also return either one of 2 scenarios, If an error occurs, 
-it makes it return an error code in html unless using the framework where it will return it in JSON.
+it makes it return an error code in html unless using the framework where it will return it in text.
 OR if everything works fine it will return a confirmation message in html,
-unless using the framework where it will return it in JSON.
+unless using the framework where it will return it in text.
 
 **Required Format:-**
 API.json file format should be at minimum:
@@ -149,11 +168,13 @@ API.json file format should be at minimum:
     "password": "REPLACE_WITH_PASSWORD",
 }
 
-## Error Codes
+## Error Codes ❌
 
-❌ In case of errors, the system returns specific HTTP status codes. Familiarize yourself with these codes to troubleshoot issues effectively.
+In case of errors, the system returns specific HTTP status codes.
+Familiarize yourself with these codes to troubleshoot issues effectively.
 
-## Codes
+## Codes 🛠️
+
 The following are codes returned if an error occurred:-
 
 - 400: Bad Request - Failed to access database/Bad Inputs, Most likely either Client-Side Issue or Frontend Issue
@@ -166,11 +187,11 @@ The following are codes returned if an error occurred:-
 
 ⚠️ CAREFUL from SQL injection on the Frontend, as this is a software that runs on the server using SQLite. ⚠️
 
-🐛 You may also get a 404 if the API code is not valid. 🐛
+🐛 You may also get a `404` error if the API code is not valid. 🐛
 
-## Framework Setup
+## Framework Setup 🛠️
 
-🛠️ To use the `API_FrameWork.py`, include the following in your code:
+To use the `API_FrameWork.py`, include the following in your code:
 
 ```python
 from API_FrameWork import *
@@ -182,19 +203,19 @@ msg, code = info
 Where now it will run the framework, save its details and allow you to interact with `msg` and `code` as variables.
 Do change API_FrameWork import statement to correctly locate the file.
 
-## Server Setup
+## Server Setup 🖥️
 
-🖥️ Follow these steps to set up the server:
+Follow these steps to set up the server:
 
 1. Clone the repository: `git clone https://github.com/DefinetlyNotAI/Test-generator.git`
 2. Install dependencies: `pip install -r requirements.txt`
 3. Start the server: `waitress-serve --listen=*:5000 wsgi_server:app`
 
-## Vulnerability Scanning Setup
+## Vulnerability Scanning Setup 🔒
 
-🔒 Ensure the security of your setup by installing and configuring PIPX and GGShield.
+Ensure the security of your setup by installing and configuring PIPX and GGShield.
 
-### PIPX Installation
+### PIPX Installation 👨‍💻
 
 Run the following commands to install PIPX:
 
@@ -203,7 +224,7 @@ py -m pip install --user pipx
 .\pipx.exe ensurepath
 ```
 
-### GGShield Installation
+### GGShield Installation 🛠️
 
 Install GGShield using PIPX and authenticate your session:
 
@@ -212,7 +233,7 @@ pipx install ggshield
 ggshield auth login
 ```
 
-### GGShield Scan
+### GGShield Scan 🛡️
 
 Scan your repository for secrets and vulnerabilities using GGShield:
 

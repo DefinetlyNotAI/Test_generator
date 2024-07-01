@@ -6,12 +6,12 @@ from DataBase import *
 app = Flask(__name__)
 
 err_codes = {
-    400: "Bad Request - Failed to access database or Bad Inputs",
-    401: "Unauthorized Access - Incorrect password",
-    404: "Not found - API request not correct/not found",
-    409: "Conflict - Already exists",
-    500: "Internal Server Error - SQLite",
-    520: "Unknown error - Caught exception"
+    400: 'Bad Request - Failed to access database or Bad Inputs <p> Most likely either Client-Side Issue or Frontend Issue </p>',
+    401: 'Unauthorized Access - Incorrect password <p> Most likely either Client-Side Issue or Frontend Issue </p>',
+    404: 'Not found - API request not correct/not found <p> Most likely either Client-Side Issue or Frontend Issue </p>',
+    409: 'Conflict - Already exists, Duplicate entry <p> <p> Most likely a Backend Issue, please report it here:  <a href="https://github.com/DefinetlyNotAI/Test-generator/issues/new/choose">Here</a> </p>',
+    500: 'Internal Server Error - SQLite error <p> Most likely either Client-Side Issue or Frontend Issue </p>',
+    520: 'Unknown error - Caught exception <p> Most likely a Backend Issue, please report it here:  <a href="https://github.com/DefinetlyNotAI/Test-generator/issues/new/choose">Here</a></p>',
 }
 
 
