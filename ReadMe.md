@@ -1,75 +1,96 @@
-# Exam Generator
+# Exam Generator Server Project Documentation
 
-**Exam Generator** is a Python application designed to create exams based on predefined criteria from a CSV file and a configuration file. It allows for the generation of exams with varying difficulties, ensuring a balanced mix of hard, medium, and easy questions, according to specified percentages. The tool also ensures that the total points and the number of questions meet the requirements set in the configuration file.
+## Introduction
 
-<div align="center">
-    <a href="https://github.com/DefinetlyNotAI/Test-generator/issues"><img src="https://img.shields.io/github/issues/DefinetlyNotAI/Test-generator" alt="GitHub Issues"></a>
-    <a href="https://github.com/DefinetlyNotAI/Test-generator/tags"><img src="https://img.shields.io/github/v/tag/DefinetlyNotAI/Test-generator" alt="GitHub Tag"></a>
-    <a href="https://github.com/DefinetlyNotAI/Test-generator/graphs/commit-activity"><img src="https://img.shields.io/github/commit-activity/t/DefinetlyNotAI/Test-generator" alt="GitHub Commit Activity"></a>
-    <a href="https://github.com/DefinetlyNotAI/Test-generator/languages"><img src="https://img.shields.io/github/languages/count/DefinetlyNotAI/Test-generator" alt="GitHub Language Count"></a>
-    <a href="https://github.com/DefinetlyNotAI/Test-generator/actions"><img src="https://img.shields.io/github/check-runs/DefinetlyNotAI/Test-generator/main" alt="GitHub Branch Check Runs"></a>
-    <a href="https://github.com/DefinetlyNotAI/Test-generator"><img src="https://img.shields.io/github/repo-size/DefinetlyNotAI/Test-generator" alt="GitHub Repo Size"></a>
-</div>
-
-## Features
-
-- **CSV File Processing**: Reads questions from a CSV file, validating each entry for correctness and completeness.
-- **Configuration File Handling**: Parses a configuration file to determine exam parameters such as the number of questions, difficulty ratios, and point values.
-- **Exam Generation**: Dynamically generates exams based on the input files, ensuring adherence to the specified criteria.
-- **Output Management**: Saves the generated exam to a text file, providing a clear and concise output format.
+The Exam Generator Server is a Python-based web application designed to facilitate the creation and management of exams.
+It integrates with a SQLite database to store user information and preferences,
+processes configuration and question files, and generates exams based on specified criteria.
 
 ## Getting Started
 
-To get started with **Exam Generator**, ensure you have Python installed on your system. Clone the repository or download the source code and navigate to the project directory.
+To get started with the Exam Generator Server, ensure you have Python 3.x installed on your system. 
+Additionally, you'll need to install Flask and other dependencies listed below.
 
 ### Prerequisites
-
 - Python 3.x
-- A CSV file (`Test.csv`) containing exam questions (One has been preset for you).
-- A configuration file (`.config`) specifying exam parameters (One has been preset for you, all you need to do is fill in the numbers).
+- Flask
+- sqlite3
+- pandas
+- secrets
+- string
+- sqlite3
+- configparser
+- csv
+- json
+- os.path
+- random
+- time
+
+All of this is found in the `requirements.txt` file.
 
 ### Installation
 
-This project is intended to be run directly without installation.
-Ensure you have Python installed and then execute the script via the command line `python3 TG.py`.
+Clone the repository or download the source code to your local machine. 
+Navigate to the project directory and install the required dependencies using pip:
 
-Finally, you can clone into the project repository and run the script by executing the following command: `git clone https://github.com/DefinetlyNotAI/Test-generator.git`
+```bash
+pip install -r requirements.txt
+```
 
 ## Usage
 
-1. Place your `Test.csv` file in the project directory, containing your exam questions formatted correctly.
-2. Create a configuration file (`.config`) in the same directory, specifying your desired exam parameters.
-3. Run the script. The generated exam will be saved as `Exam.xlsx`.
+The server operates via a Flask web application. To start the server, execute the following command:
 
-For better results, you can make sure the config file matches the first bunch of questions,
-this insures to timeout, AND still generates random questions.
-
-### Config File Format
-
-The config file should be formatted as follows:
-```
-[Config-Exam]
-questions_amount=6
-minimum_titles=3
-hard=2
-medium=1
-easy=3
-points=10
-debug=0
+```bash
+waitress-serve --listen=*:5000 wsgi_server:app
 ```
 
-Where `questions_amount` is how many questions you want,
-`minimum_titles` is how many titles you want MINIMUM,
-`hard`,`medium` and `easy` is how many questions should be from each,
-and finally `points` is how much the total score of the exam should equal to,
-and `debug` is if you want extra parameters to be shown in the exam `0` being False, and `1` being true.
+The server will listen on `localhost` (127.0.0.1) and port `5000` unless configured otherwise.
 
-All values must be integers and make sense.
+### Key Features
+
+- **File Uploads**: Supports uploading of `db.config`, `API.json`, and `Test.csv` files.
+- **Database Management**: Interacts with a SQLite database to manage user accounts and preferences.
+- **Exam Generation**: Generates exams based on the uploaded question file and configuration settings.
+- **Error Handling**: Implements standardized error messages and HTTP status codes for various scenarios.
+
+## Design Decisions
+
+### Modular Approach
+
+The project adopts a modular approach, organizing code into distinct modules for better maintainability and scalability.
+For instance, the `UserManager` class encapsulates all database interactions, 
+simplifying the management of database connections and queries.
+
+### Centralized Error Handling
+
+Centralized error handling is implemented through the `err_codes` dictionary, 
+providing a consistent way to communicate errors to the client. 
+This approach enhances the user experience by presenting clear and understandable error messages.
+
+### Secure Password Storage
+
+Passwords are securely generated and stored using the `secrets` and `sqlite3` library into the `users.db` database,
+ensuring that user data remains protected.
+
+## Code Structure
+
+The project is divided into several modules:
+
+- `DataBase.py`: Utility functions for processing configuration files, reading question files, and generating exams.
+- - `UserManager`: Manages database operations, including user creation, verification, and preference updates.
+- `flask_server.py`: Entry point of the application, defining the Flask server and routes.
+- `wsgi_server.py`: WSGI server that serves the Flask application.
 
 ## Contributing
 
-Contributions are welcome to the project. Feel free to submit a pull request or open an issue to discuss potential improvements or bugs.
+Contributions to the Exam Generator Server are welcome. 
+Please review the CONTRIBUTING.md file for guidelines on submitting pull requests.
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE.md file for details.
+This project is licensed under the MIT License. See the LICENSE file for details.
+
+## Contact
+
+For inquiries or contributions, please contact Shahm Najeeb at Nirt_12023@outlook.com.
