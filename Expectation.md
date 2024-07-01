@@ -121,7 +121,7 @@ If a message gives you a number not text, know it's an error code:
 - 500: Internal Server Error - SQLite
 - 520: Unknown error - Caught exception
 
-CAREFUL from SQL injection, as this is a software that runs on the server using SQLite.
+⚠️ CAREFUL from SQL injection, as this is a software that runs on the server using SQLite. ⚠️
 
 ## Server Setup
 

@@ -1,8 +1,7 @@
 import os
-
 from flask import Flask, request, render_template
-
 from DataBase import *
+
 
 app = Flask(__name__)
 
