@@ -25,22 +25,22 @@ def upload_file():
     """
     Uploads files to the server.
 
-    This function is a route handler for the '/upload' endpoint. It expects a POST request with two files: 'Database.config' and 'API.json'.
+    This function is a route handler for the '/upload' endpoint. It expects a POST request with two files: 'db.config' and 'API.json'.
 
     Returns:
         An HTML message indicating success if both files are successfully uploaded and saved.
-        An HTML message indicating an error if either 'Database.config' or 'API.json' is missing, including an error number.
+        An HTML message indicating an error if either 'db.config' or 'API.json' is missing, including an error number.
     """
     # Check if both required files are present in the request
     # Get the files from the request
-    config_file = request.files['Database.config']
+    config_file = request.files['db.config']
     api_file = request.files['API.json']
     csv_file = request.files['Test.csv']
 
     if config_file.filename != '' and api_file.filename != '' and csv_file.filename != '':
         # Define the path for saving the files in the current working directory
         base_path = os.path.dirname(os.path.abspath(__file__))
-        config_path = os.path.join(base_path, 'Database.config')
+        config_path = os.path.join(base_path, 'db.config')
         api_path = os.path.join(base_path, 'API.json')
         csv_file_path = os.path.join(base_path, 'Test.csv')
 
@@ -57,7 +57,7 @@ def upload_file():
         api_file.save(api_path)
         csv_file.save(csv_file_path)
 
-        if os.path.exists('Database.config') and os.path.exists('API.json') and os.path.exists('Test.csv'):
+        if os.path.exists('db.config') and os.path.exists('API.json') and os.path.exists('Test.csv'):
             # Return an HTML success message
             message = database_thread()
             if message.startswith('LIST'):
@@ -81,9 +81,9 @@ def upload_file():
             else:
                 return f"<html><body><h1>Success</h1>{message}</body></html>", 200
         else:
-            return f"<html><body><h1>Error</h1><h2>Error Number: 404</h2><p>Database.config, Test.csv and API.json files are required and cannot be empty.</p><p>{err_codes[404]}</p></body></html>", 404
+            return f"<html><body><h1>Error</h1><h2>Error Number: 404</h2><p>db.config, Test.csv and API.json files are required and cannot be empty.</p><p>{err_codes[404]}</p></body></html>", 404
     else:
-        return f"<html><body><h1>Error</h1><h2>Error Number: 404</h2><p>Database.config, Test.csv and API.json files are required and cannot be empty.</p><p>{err_codes[404]}</p></body></html>", 404
+        return f"<html><body><h1>Error</h1><h2>Error Number: 404</h2><p>db.config, Test.csv and API.json files are required and cannot be empty.</p><p>{err_codes[404]}</p></body></html>", 404
 
 
 if __name__ == '__main__':

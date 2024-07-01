@@ -422,7 +422,7 @@ def exam_generator(username):
             if check_for_LIST(questions):
                 return questions
 
-        config_data = read_config('DataBase.config')
+        config_data = read_config('db.config')
         if isinstance(config_data, str):
             if check_for_LIST(config_data):
                 return config_data
