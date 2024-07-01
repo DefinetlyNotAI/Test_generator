@@ -1,5 +1,14 @@
 # Exam Generator Server Project Documentation
 
+<div align="center">
+    <a href="https://github.com/DefinetlyNotAI/Test-generator/issues"><img src="https://img.shields.io/github/issues/DefinetlyNotAI/Test-generator" alt="GitHub Issues"></a>
+    <a href="https://github.com/DefinetlyNotAI/Test-generator/tags"><img src="https://img.shields.io/github/v/tag/DefinetlyNotAI/Test-generator" alt="GitHub Tag"></a>
+    <a href="https://github.com/DefinetlyNotAI/Test-generator/graphs/commit-activity"><img src="https://img.shields.io/github/commit-activity/t/DefinetlyNotAI/Test-generator" alt="GitHub Commit Activity"></a>
+    <a href="https://github.com/DefinetlyNotAI/Test-generator/languages"><img src="https://img.shields.io/github/languages/count/DefinetlyNotAI/Test-generator" alt="GitHub Language Count"></a>
+    <a href="https://github.com/DefinetlyNotAI/Test-generator/actions"><img src="https://img.shields.io/github/check-runs/DefinetlyNotAI/Test-generator/main" alt="GitHub Branch Check Runs"></a>
+    <a href="https://github.com/DefinetlyNotAI/Test-generator"><img src="https://img.shields.io/github/repo-size/DefinetlyNotAI/Test-generator" alt="GitHub Repo Size"></a>
+</div>
+
 ## Introduction
 
 The Exam Generator Server is a Python-based web application designed to facilitate the creation and management of exams.
