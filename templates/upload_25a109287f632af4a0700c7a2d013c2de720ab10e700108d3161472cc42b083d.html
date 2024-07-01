@@ -105,14 +105,14 @@
           <title></title>
           <h2>Select Files to Upload</h2>
           <form action="http://127.0.0.1:5000/upload" method="post" enctype="multipart/form-data">
-            <input type="file" id="dbConfig" name="Database.config" accept=".config">
+            <input type="file" id="dbConfig" name="Database.config" accept="Database.config">
             <label for="dbConfig">Select Database.config file:</label>
             <br>
-            <input type="file" id="apiJson" name="API.json" accept=".json">
+            <input type="file" id="apiJson" name="API.json" accept="API.json">
             <label for="apiJson">Select API.json file:</label>
             <br>
-            <input type="file" id="cvs" name="Exam.cvs" accept=".cvs">
-            <label for="apiJson">Select Exam.cvs file (Not required):</label>
+            <input type="file" id="csv" name="Exam.csv" accept="Exam.csv">
+            <label for="apiJson">Select Exam.csv file (Not required):</label>
             <br>
             <input type="submit" value="Upload Files">
           </form>
