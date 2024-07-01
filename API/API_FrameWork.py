@@ -3,6 +3,7 @@ import requests
 
 def framework():
     url = 'http://127.0.0.1:5000/upload'
+    download_url = 'http://127.0.0.1:5000/download_exam'
 
     # Open files within the same scope as the POST request to ensure they stay open
     with open('db.config', 'rb') as config_file, \
@@ -22,11 +23,32 @@ def framework():
             code = 503
             msg = e
 
-    if code == 200:
-        msg = f"Files uploaded successfully with status code {msg}."
+    if code == 201:
+        # Attempt to download Exam.xlsx
+        try:
+            download_response = requests.get(download_url)
+            if download_response.status_code == 200:
+                with open('Exam.xlsx', 'wb') as f:
+                    f.write(download_response.content)
+                msg = f"Files uploaded successfully with status code 200. Exam.xlsx also downloaded successfully. HTML: {msg}"
+                code = 200
+            else:
+                msg = f"Failed to download Exam.xlsx. HTML: {msg}"
+                code = 500
+        except Exception as e:
+            msg = f"Download failed: {e}"
+            code = 500
+    elif code == 200:
+        msg = f"Files uploaded successfully with status code 200. HTML: {msg}"
     elif code == 503:
-        msg = f"Upload failed due to {msg}."
+        msg = f"Upload failed due to HTML: {msg}."
     else:
-        msg = f"Upload failed with status code {msg}."
+        msg = f"Upload failed with status code {code}. HTML: {msg}"
 
     return msg, code
+
+
+info = framework()
+msg, code = info
+print(msg)
+print(code)

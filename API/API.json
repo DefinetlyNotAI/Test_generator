@@ -1,6 +1,6 @@
 {
-    "api": "REC",
-    "username": "username",
-    "password": "password",
-    "exclusion_titles": ["t1","t2"]
+    "api": "",
+    "username": "",
+    "password": "",
+    "exclusion_titles": ["t1 ,t2"]
 }

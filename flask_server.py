@@ -1,9 +1,10 @@
 import os
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, send_from_directory
 from DataBase import *
 
 
 app = Flask(__name__)
+base_path = os.path.dirname(os.path.realpath(__file__))
 
 err_codes = {
     400: 'Bad Request - Failed to access database or Bad Inputs <p> Most likely either Client-Side Issue or Frontend Issue </p>',
@@ -64,26 +65,47 @@ def upload_file():
                 # Removing 'LIST' from the beginning of the message
                 message = message.replace('LIST', '', 1)
 
-                # Splitting the message by comma to create a list
-                message_list = message.split('&&')
+                parts = message.split(' && ')
 
-                # Using the second element as the error number and the first element as the code message
-                error_number = int(message_list[1].strip())
-                error_message_key = message_list[0].strip() if len(message_list) > 1 else None
+                # Check if there are exactly two parts
+                if len(parts) == 2:
+                    # Strip spaces from the text part and convert the number part to an integer
+                    error_message_key = parts[0].strip()
+                    error_number = int(parts[1]) if parts[1].isdigit() else None
+
+                else:
+                    raise ValueError("The message does not match the expected format.")
 
                 # Checking if the error number exists in err_codes
                 if error_number in err_codes:
                     # Returning an HTML response with the error number and corresponding message
                     return f"<html><body><h1>Error</h1><h2>Error Number: {error_number}</h2><p>{error_message_key}</p><p>{err_codes[error_number]}</p></body></html>", error_number
                 else:
-                    # Returning an HTML response for unknown errors
-                    return f"<html><body><h1>Error</h1><h2>Error Number: 501</h2><p>Unknown error - Not Defined</p></body></html>", 501
+                    return f"<html><body><h1>Error</h1><h2>Error Number: 501</h2><p>Unknown error - Not Defined - {error_message_key}</p></body></html>", 501
             else:
-                return f"<html><body><h1>Success</h1>{message}</body></html>", 200
+                if not message.startswith("DOWNLOAD"):
+                    return f"<html><body><h1>Success</h1>{message}</body></html>", 200
+                else:
+                    return f"<html><body><h1>Success</h1>{message.replace('DOWNLOAD', '', 1)}</body></html>", 201
         else:
             return f"<html><body><h1>Error</h1><h2>Error Number: 404</h2><p>db.config, Test.csv and API.json files are required and cannot be empty.</p><p>{err_codes[404]}</p></body></html>", 404
     else:
         return f"<html><body><h1>Error</h1><h2>Error Number: 404</h2><p>db.config, Test.csv and API.json files are required and cannot be empty.</p><p>{err_codes[404]}</p></body></html>", 404
+
+
+@app.route('/download_exam', methods=['GET'])
+def download_exam():
+    """
+    Serves the Exam.xlsx file for download.
+    """
+    # Define the path for the Exam.xlsx file
+    exam_path = os.path.join(base_path, 'Exam.xlsx')
+
+    # Check if the file exists before attempting to send it
+    if os.path.exists(exam_path):
+        return send_from_directory(directory=base_path, path='Exam.xlsx')
+    else:
+        return f"<html><body><h1>Error</h1><h2>Error Number: 404</h2><p>Exam.xlsx does not exist.</p></body></html>", 404
 
 
 if __name__ == '__main__':

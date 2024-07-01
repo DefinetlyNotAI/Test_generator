@@ -51,12 +51,14 @@ To use this do the following steps:
 The JSON file format is structured as follows:
 
 ```text
+
 {
     "api": "REPLACE_WITH_API_NAME",
     "username": "REPLACE_WITH_USERNAME",
     "password": "REPLACE_WITH_PASSWORD",
     "exclusion_titles": "REPLACE_WITH_EXCLUSION_1", "REPLACE_WITH_EXCLUSION_2"
 }
+
 ```
 
 ### CSV Format 📃
@@ -105,10 +107,13 @@ unless using the framework where it will return it in text.
 
 **Required Format:-**
 API.json file format should be at minimum:
+```text
 {
     "api": "REC",
     "username": "REPLACE_WITH_USERNAME",
 }
+```
+
 
 Disclaimer:
 URL is the URL of the question's image (If not there, it would be None).
@@ -126,10 +131,12 @@ unless using the framework where it will return it in text, usually it should al
 
 **Required Format:-**
 API.json file format should be at minimum:
+```text
 {
     "api": "RUG",
     "username": "REPLACE_WITH_USERNAME",
 }
+```
 
 ### RUD API 🔝
 
@@ -143,13 +150,14 @@ unless using the framework where it will return it in text.
 
 **Required Format:-**
 API.json file format should be at minimum:
+```text
 {
     "api": "RUD",
     "username": "REPLACE_WITH_USERNAME",
     "password": "REPLACE_WITH_PASSWORD",
-    "exclusion_titles": "REPLACE_WITH_EXCLUSION_1", "REPLACE_WITH_EXCLUSION_2"
+    "exclusion_titles": ["REPLACE_WITH_EXCLUSION_1", "REPLACE_WITH_EXCLUSION_2"]
 }
-
+```
 ### RUR API 🚫
 
 Request User Removal
@@ -162,12 +170,13 @@ unless using the framework where it will return it in text.
 
 **Required Format:-**
 API.json file format should be at minimum:
+```text
 {
     "api": "RUR",
     "username": "REPLACE_WITH_USERNAME",
     "password": "REPLACE_WITH_PASSWORD",
 }
-
+```
 ## Error Codes ❌
 
 In case of errors, the system returns specific HTTP status codes.

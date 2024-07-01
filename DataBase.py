@@ -32,17 +32,45 @@ def check_for_LIST(value):
 
 
 class UserManager:
+    # Class to handle user management
     def __init__(self, db_name='users.db'):
+        """
+        Initializes the UserManager class.
+
+        Args:
+            db_name (str, optional): The name of the database. Defaults to 'users.db'.
+
+        Returns:
+            None
+        """
         self.db_name = db_name
         self.conn = None
         self.cursor = None
 
     def connect(self):
+        """
+        Connects to the SQLite database.
+
+        This function establishes a connection to the SQLite database specified by the `db_name` attribute.
+        If a connection has not been established yet, it creates a new connection and assigns it to the `conn` attribute.
+        It also creates a cursor object and assigns it to the `cursor` attribute.
+
+        Returns:
+            None
+        """
         if self.conn is None:
             self.conn = sqlite3.connect(self.db_name)
             self.cursor = self.conn.cursor()
 
     def disconnect(self):
+        """
+        Closes the connection to the SQLite database.
+
+        This function closes the connection to the SQLite database and clears the `conn` and `cursor` attributes.
+
+        Returns:
+            None
+        """
         if self.conn:
             self.conn.close()
             self.conn = None
@@ -50,6 +78,9 @@ class UserManager:
 
     @staticmethod
     def create_db_initial():
+        """
+        Connects to the SQLite database. This function creates the database file if it doesn't exist, creates a table named Users with specific columns, and commits the transaction before closing the connection.
+        """
         # Connect to the SQLite database
         # This will create the database file if it doesn't already exist
         conn = sqlite3.connect('users.db')
@@ -74,6 +105,16 @@ class UserManager:
         conn.close()
 
     def verify_password(self, username, password):
+        """
+        Verify the password for a given username.
+
+        Args:
+            username (str): The username to verify.
+            password (str): The password to verify.
+
+        Returns:
+            bool: True if the password is correct, False otherwise.
+        """
         try:
             self.connect()
             self.cursor.execute("SELECT password FROM Users WHERE username=?", (username,))
@@ -89,6 +130,19 @@ class UserManager:
             return False
 
     def create_db(self, username, exclusion_titles):
+        """
+        Creates a new database entry for a user with the given username and exclusion titles.
+
+        Args:
+            username (str): The username of the user.
+            exclusion_titles (str): The exclusion titles for the user.
+
+        Returns:
+            str: The password for the newly created user, or an error message if the username already exists or an exception occurs.
+
+        Raises:
+            Exception: If an exception occurs during the execution of the function.
+        """
         try:
             self.connect()
             self.cursor.execute("SELECT * FROM users WHERE username=?", (username,))
@@ -115,6 +169,21 @@ class UserManager:
             return f'LIST {e} && 500'
 
     def remove(self, username, password):
+        """
+        Removes a user from the database if the provided password matches the user's password.
+
+        Args:
+            username (str): The username of the user to be removed.
+            password (str): The password of the user.
+
+        Returns:
+            str: A success message if the user is successfully removed.
+            str: An error message if the password is incorrect.
+            str: An error message if an exception occurs.
+
+        Raises:
+            Exception: If an exception occurs during the execution of the function.
+        """
         try:
             if self.verify_password(username, password):
                 self.connect()
@@ -128,6 +197,24 @@ class UserManager:
             return f'LIST {e} && 500'
 
     def add_exclusion_db_main(self, name, titles, password):
+        """
+        Adds new titles to the exclusion list for a user in the database.
+
+        Args:
+            name (str): The username of the user.
+            titles (str): The new titles to be added to the exclusion list.
+            password (str): The password of the user.
+
+        Returns:
+            str: A success message if the titles are successfully added to the exclusion list for the user.
+                If there are no new titles to add, returns "LIST No new titles to add. && 400".
+                If the password is incorrect, returns "LIST Incorrect password. && 401".
+                If an exception occurs during the execution of the function, returns a formatted error message.
+
+        Raises:
+            None.
+
+        """
         try:
             if self.verify_password(name, password):
                 self.connect()
@@ -170,6 +257,28 @@ class UserManager:
 
     @staticmethod
     def add_exclusion_db(name, titles, password, special=None):
+        """
+        Adds an exclusion to the database for a given user.
+
+        Args:
+            name (str): The name of the user.
+            titles (str): The titles to exclude.
+            password (str): The password of the user.
+            special (Optional[str]): An optional parameter indicating if the exclusion is special.
+
+        Returns:
+            str: The result of adding the exclusion to the database. If successful, it returns the value returned by `um.add_exclusion_db_main()`. If an error occurs, it returns a formatted string indicating the error.
+
+        Raises:
+            Exception: If an error occurs during the execution of the function.
+
+        Note:
+            - The `um.add_exclusion_db_main()` function is called to add the exclusion to the database.
+            - If the `check_for_LIST()` function returns True for the value returned by `um.add_exclusion_db_main()`, it is returned.
+            - If the `special` parameter is not provided, the `um.add_exclusion_db_main()` function is called with a comma and the password as arguments.
+            - If an error occurs, a formatted string indicating the error is returned.
+
+        """
         try:
             value = um.add_exclusion_db_main(name, titles, password)
             if check_for_LIST(value):
@@ -183,6 +292,19 @@ class UserManager:
             return f'LIST {e} && 520'
 
     def get_excluded_titles(self, username):
+        """
+        Retrieves the titles to exclude for a given user from the database.
+
+        Args:
+            username (str): The name of the user.
+
+        Returns:
+            list: A list of titles to exclude for the user.
+
+        Raises:
+            Exception: If an error occurs during the execution of the function.
+
+        """
         try:
             self.connect()
             self.cursor.execute('''SELECT titles_to_exclude FROM Users WHERE username=?''', (username,))
@@ -201,6 +323,19 @@ class UserManager:
 
     @staticmethod
     def extract_user_info(data):
+        """
+        Extracts the username, password, and exclusion titles from the provided dictionary.
+
+        Args:
+            data (dict): A dictionary containing the username, password, and exclusion titles.
+
+        Returns:
+            tuple: A tuple containing the username, password, and exclusion titles.
+
+        Raises:
+            Exception: If an error occurs during the execution of the function.
+
+        """
         try:
             # Safely accessing the values from the user_data dictionary
             username = data.get('Username', 'Unknown')
@@ -221,6 +356,35 @@ class UserManager:
 
 # Function to read and validate the CSV file
 def read_csv(file_path):
+    """
+    Reads a CSV file and returns a list of questions.
+
+    Args:
+        file_path (str): The path to the CSV file.
+
+    Returns:
+        list: A list of questions.
+
+    Raises:
+        FileNotFoundError: If the file is not found.
+        Exception: If an error occurs while reading the file.
+
+    The function reads a CSV file located at the specified file path. It returns a list of questions, where each question is a list of values from the CSV file. The function also performs some validation on the data in the CSV file.
+
+    If the file is not found, a `FileNotFoundError` is raised. If an error occurs while reading the file, an `Exception` is raised.
+
+    The function assumes that the CSV file has a header row and that the URL column is the fifth column (index starts at 0).
+
+    The function checks for empty values in the specified columns (excluding the URL column) and returns an error message if any empty values are found.
+
+    The function also checks the difficulty level and returns an error message if the difficulty level is not one of 'Hard', 'Medium', or 'Easy'.
+
+    The function also checks the score and returns an error message if the score is not an integer or is not in the range of 0 to 100.
+
+    The function appends the row to the list of questions, including the URL if it is present.
+
+    The function returns the list of questions.
+    """
     try:
         questions = []
         with open(file_path, mode='r', encoding='utf-8') as file:
@@ -264,6 +428,34 @@ def read_csv(file_path):
 
 # Function to read and validate the config file
 def read_config(file_path):
+    """
+    Reads a configuration file and validates its contents.
+
+    Args:
+        file_path (str): The path to the configuration file.
+
+    Returns:
+        dict or str: A dictionary containing the configuration values if the file is valid, or a string
+        containing an error message if the file is invalid.
+
+    Raises:
+        FileNotFoundError: If the configuration file is not found.
+        Exception: If an unexpected error occurs.
+
+    The function reads a configuration file using the `ConfigParser` class. It checks that the file contains
+    exactly one section, and that it contains all the required options. It also checks that the values of
+    certain options are integers. If the file is valid, the function returns a dictionary containing the
+    configuration values. If the file is invalid, the function returns a string containing an error message.
+
+    Note:
+        The function assumes that the configuration file is in the INI format.
+
+    Example:
+        >>> read_config('config.ini')
+        {'questions_amount': 10, 'minimum_titles': 5, 'hard': 3, 'medium': 4, 'easy': 3, 'points': 100, 'debug': False}
+        >>> read_config('invalid_config.ini')
+        'LIST Config file must contain exactly one section. && 400'
+    """
     try:
         config = ConfigParser()
         config.read(file_path)
@@ -299,6 +491,15 @@ def read_config(file_path):
 
 
 def create_excel_from_txt(debug):
+    """
+    Create an Excel file from text data.
+
+    Parameters:
+    - debug (bool): A flag indicating whether to include additional columns in the Excel file based on debug mode.
+
+    Returns:
+    - None
+    """
     try:
         # Initialize an empty list to hold our data
         data = []
@@ -343,6 +544,18 @@ def create_excel_from_txt(debug):
 
 # Function to generate the exam
 def generate_exam(questions, config_data, exclude_list):
+    """
+    Generate an exam based on the provided questions and configuration data while excluding certain titles.
+
+    Parameters:
+    - questions (list): A list of questions to generate the exam from.
+    - config_data (dict): A dictionary containing configuration data such as the number of questions, difficulty levels, and points.
+    - exclude_list (list): A list of titles to exclude from the exam generation.
+
+    Returns:
+    - tuple: A tuple containing the generated exam as a list of selected questions, the total points of the exam, the difficulty ratios of each difficulty level, and the list of unique titles included in the exam.
+    - str: If an exception occurs during the exam generation, a string indicating the error.
+    """
     try:
         while True:
             if not questions:
@@ -481,7 +694,7 @@ def exam_generator(username):
         if check_for_LIST(msg):
             return msg
 
-        return fr'''
+        return fr'''DOWNLOAD
         <p>Exam Generated and saved to Exam.xlsx
         <p>Exam Generation info;
         <p>Total Points in exam: {total_points}
@@ -495,6 +708,13 @@ def exam_generator(username):
 
 
 def database_thread():
+    """
+    Reads the API configuration from the 'API.json' file and extracts the API, username, password, and exclusion titles.
+
+    Returns:
+    - tuple: A tuple containing the API, username, password, and exclusion titles.
+    - str: If an exception occurs, returns a formatted error message.
+    """
     try:
         def init():
             # Initialize the UserManager and API values
