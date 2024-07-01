@@ -127,4 +127,7 @@ CAREFUL from SQL injection, as this is a software that runs on the server using 
 
 First Download the server requirements using `pip install -r requirements.txt`
 Then Download the server using `git clone https://github.com/DefinetlyNotAI/Test-generator.git`
-Finally to start the server use `waitress-serve --listen=*:5000 wsgi:app`
+Finally to start the server use `waitress-serve --listen=*:5000 wsgi_server:app`
+
+To Scan a Repo for Vulnerabilities:
+Go to the directory of where the repo exists, and run the `GGSheild` Scanner: `ggshield secret scan repo "Nirt - Exam Maker"`
