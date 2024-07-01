@@ -11,12 +11,23 @@ import pandas as pd
 
 
 def check_for_LIST(value):
+    """
+    Check if the input value contains the word 'LIST'.
+
+    Args:
+        value (str): The input string to check.
+
+    Returns:
+        bool: True if 'LIST' is found in the input string, False otherwise.
+    """
     if value is None:
         return False
+
     words = value.split()
     for word in words:
         if word == 'LIST':
             return True
+
     return False
 
 
