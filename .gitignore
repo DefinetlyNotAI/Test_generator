@@ -4,5 +4,3 @@
 # IntelliJ project files
 .idea
 .git
-/API.json
-/Database.config
