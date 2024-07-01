@@ -471,12 +471,12 @@ def exam_generator(username):
             return msg
 
         return fr'''
-        <p>Exam Generated and saved to Exam.xlsx<\p>
-        <p>Exam Generation info;<\p>
-        <p>Total Points in exam: {total_points}<\p>
-        <p>Number of Questions Included in exam: {len(exam)}<\p>
-        <p>Total Titles Used in exam: {len(total_titles)}<\p>
-        <p>Difficulty Ratio used: Hard: {round(difficulty_ratios['Hard'], 2)}%, Medium: {round(difficulty_ratios['Medium'], 2)}%, Easy: {round(difficulty_ratios['Easy'], 2)}%<\p>
+        <p>Exam Generated and saved to Exam.xlsx
+        <p>Exam Generation info;
+        <p>Total Points in exam: {total_points}
+        <p>Number of Questions Included in exam: {len(exam)}
+        <p>Total Titles Used in exam: {len(total_titles)}
+        <p>Difficulty Ratio used: Hard: {round(difficulty_ratios['Hard'], 2)}%, Medium: {round(difficulty_ratios['Medium'], 2)}%, Easy: {round(difficulty_ratios['Easy'], 2)}%
         '''
 
     except Exception as e:
