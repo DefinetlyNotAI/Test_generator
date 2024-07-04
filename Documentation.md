@@ -1,5 +1,8 @@
 # 🎉 Exam Maker Documentation 📝
 
+Version 1.1.1 by DefinetlyNotAI (aka Shahm Najeeb)
+Updated at 04/07/2024
+
 Welcome to the comprehensive guide for the **Exam Maker** API Framework This document outlines how to effectively utilize our framework to create, manage, and distribute exams. Let's dive right in!
 
 ## Table of Contents 🔍
