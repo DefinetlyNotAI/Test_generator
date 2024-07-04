@@ -205,12 +205,13 @@ To use the `API_FrameWork.py`, include the following in your code:
 ```python
 from API_FrameWork import *
 
-info = framework()
-msg, code = info
+msg, code = framework()
 ```
 
 Where now it will run the framework, save its details and allow you to interact with `msg` and `code` as variables.
 Do change API_FrameWork import statement to correctly locate the file.
+
+`msg` will contain the output of the API in HTML and `code` will contain the HTTP status code of the response.
 
 ## Server Setup 🖥️
 

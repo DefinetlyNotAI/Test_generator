@@ -12,6 +12,7 @@ err_codes = {
     404: 'Not found - API request not correct/not found <p> Most likely either Client-Side Issue or Frontend Issue </p>',
     409: 'Conflict - Already exists, Duplicate entry <p> <p> Most likely a Backend Issue, please report it here:  <a href="https://github.com/DefinetlyNotAI/Test-generator/issues/new/choose">Here</a> </p>',
     500: 'Internal Server Error - SQLite error <p> Most likely either Client-Side Issue or Frontend Issue </p>',
+    503: 'Service Unavailable - Server error <p> Most likely a Backend Issue, please report it here:  <a href="https://github.com/DefinetlyNotAI/Test-generator/issues/new/choose">Here</a> </p>',
     520: 'Unknown error - Caught exception <p> Most likely a Backend Issue, please report it here:  <a href="https://github.com/DefinetlyNotAI/Test-generator/issues/new/choose">Here</a></p>',
 }
 
