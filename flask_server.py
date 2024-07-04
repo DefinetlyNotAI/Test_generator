@@ -1,18 +1,79 @@
-import os
+from datetime import datetime
 from flask import Flask, request, render_template, send_from_directory
 from DataBase import *
-import logging
-
-logging.basicConfig(filename='Server.log', level=logging.DEBUG)
+import os
 
 
+class Logger:
+    def __init__(self):
+        """
+        Initialize the Logger class.
+
+        This method initializes the Logger class and sets the filename attribute to 'Server.log'. It also checks if the file exists and creates it if it doesn't.
+
+        Returns:
+            None
+        """
+        # Define the filename
+        self.filename = 'Server.log'
+
+        # Check if the file exists and create it if it doesn't
+        if not os.path.exists(self.filename):
+            with open(self.filename, 'w'):
+                pass  # Empty file content is fine here since we append logs
+
+    @staticmethod
+    def timestamp():
+        """
+        Get the current date and time and format it as a string in the format 'YYYY-MM-DD HH:MM:SS'.
+
+        Returns:
+            str: The formatted timestamp.
+        """
+        # Get the current date and time
+        now = datetime.now()
+
+        # Format the timestamp as a string
+        time = f"{now.strftime('%Y-%m-%d %H:%M:%S')}"
+
+        return time
+
+    def error(self, message):
+        """
+        Writes an error message to the log file.
+
+        Parameters:
+            message (str): The error message to be written.
+
+        Returns:
+            None
+        """
+        with open(self.filename, 'a') as f:
+            f.write(f'ERROR: {message} at {self.timestamp()}\n')
+
+    def info(self, message):
+        """
+        Writes an informational message to the log file.
+
+        Parameters:
+            message (str): The informational message to be written.
+
+        Returns:
+            None
+        """
+        with open(self.filename, 'a') as f:
+            f.write(f'INFO: {message} at {self.timestamp()}\n')
+
+
+# Create an instance of the Logger class and Flask app
 app = Flask(__name__)
 base_path = os.path.dirname(os.path.realpath(__file__))
+logging = Logger()
 
 err_codes = {
     400: "Bad Request - Failed to access database or Bad Inputs <p> Most likely either Client-Side Issue or Frontend Issue </p>",
     401: "Unauthorized Access - Incorrect password <p> Most likely either Client-Side Issue or Frontend Issue </p>",
-    404: "Not found - API request not correct/not found <p> Most likely either Client-Side Issue or Frontend Issue </p>",
+    404: "Not found - API request not correct / File Not found <p> Most likely either Client-Side Issue or Frontend Issue </p>",
     409: 'Conflict - Already exists, Duplicate entry <p> <p> Most likely a Backend Issue, please report it here:  <a href="https://github.com/DefinetlyNotAI/Test-generator/issues/new/choose">Here</a> </p>',
     500: "Internal Server Error - SQLite error <p> Most likely either Client-Side Issue or Frontend Issue </p>",
     503: 'Service Unavailable - Server error <p> Most likely a Backend Issue, please report it here:  <a href="https://github.com/DefinetlyNotAI/Test-generator/issues/new/choose">Here</a> </p>',
@@ -31,6 +92,7 @@ def index():
         The rendered "upload.html" template.
 
     """
+    logging.info("Index accessed")
     return render_template("upload.html")
 
 
@@ -45,9 +107,9 @@ def validate_filename(filename):
     Returns:
         bool: True if the filename is valid, False otherwise.
     """
-    allowed_extensions = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
-    base, ext = os.path.splitext(filename)
-    if ext.lower() not in allowed_extensions:
+    allowed = {"db.config", "API.json", "Test.csv"}
+    if filename not in allowed:
+        logging.error(f"Invalid filename: {filename}. Filename must have an allowed extension.")
         return False
     if ".." in filename:
         return False
@@ -67,14 +129,19 @@ def upload_file():
     """
     # Check if both required files are present in the request
     # Get the files from the request
+    # After saving the files successfully
+    logging.info(f"Upload Request Received.")
     config_file = request.files["db.config"]
     api_file = request.files["API.json"]
     csv_file = request.files["Test.csv"]
 
     # Validate filenames
-    if not validate_filename(config_file.filename) or \
-       not validate_filename(api_file.filename) or \
-       not validate_filename(csv_file.filename):
+    if (
+        not validate_filename(config_file.filename)
+        or not validate_filename(api_file.filename)
+        or not validate_filename(csv_file.filename)
+    ):
+        logging.error(f"Invalid filename(s). Filename must not contain '..' and must have an allowed extension.")
         return (
             f"<html><body><h1>Error</h1><h2>Error Number: 400</h2><p>Invalid filename(s). Filename must not contain '..' and must have an allowed extension.</p><p>{err_codes[400]}</p></body></html>",
             400,
@@ -122,36 +189,42 @@ def upload_file():
                     # Strip spaces from the text part and convert the number part to an integer
                     error_message_key = parts[0].strip()
                     error_number = int(parts[1]) if parts[1].isdigit() else None
-
                 else:
-                    raise ValueError("The message does not match the expected format.")
+                    logging.error(f"Invalid message format: {message} with {len(parts)} parts.")
+                    return "The message does not match the expected format.", 400
 
                 # Checking if the error number exists in err_codes
                 if error_number in err_codes:
                     # Returning an HTML response with the error number and corresponding message
+                    logging.error(f"Error {error_number}: {error_message_key}")
                     return (
-                        f"<html><body><h1>Error</h1><h2>Error Number: {error_number}</h2><p>{error_message_key}</p><p>{err_codes[error_number]}</p></body></html>",
+                        f"<html><body><h1>Error</h1><h2>Error Number: {error_number}</h2><p>{err_codes[error_number]}</p></body></html>",
                         error_number,
                     )
                 else:
+                    logging.error(f"Unknown error {error_number}: {error_message_key}")
                     return (
-                        f"<html><body><h1>Error</h1><h2>Error Number: 501</h2><p>Unknown error - Not Defined - {error_message_key}</p></body></html>",
+                        f"<html><body><h1>Error</h1><h2>Error Number: 501</h2><p>Unknown error - Not Defined</p></body></html>",
                         501,
                     )
             else:
                 if not message.startswith("DOWNLOAD"):
+                    logging.info(f"Success: {message}")
                     return f"<html><body><h1>Success</h1>{message}</body></html>", 200
                 else:
+                    logging.info(f"Success: {message}")
                     return (
                         f"<html><body><h1>Success</h1>{message.replace('DOWNLOAD', '', 1)}</body></html>",
                         201,
                     )
         else:
+            logging.error("db.config, Test.csv and API.json files are required and cannot be empty.")
             return (
                 f"<html><body><h1>Error</h1><h2>Error Number: 404</h2><p>db.config, Test.csv and API.json files are required and cannot be empty.</p><p>{err_codes[404]}</p></body></html>",
                 404,
             )
     else:
+        logging.error("db.config, Test.csv and API.json files are required and cannot be empty.")
         return (
             f"<html><body><h1>Error</h1><h2>Error Number: 404</h2><p>db.config, Test.csv and API.json files are required and cannot be empty.</p><p>{err_codes[404]}</p></body></html>",
             404,
@@ -163,6 +236,7 @@ def download_exam():
     """
     Serves the Exam.xlsx file for download.
     """
+    logging.info("Download Request Received")
     # Define the path for the Exam.xlsx file
     exam_path = os.path.join(base_path, "Exam.xlsx")
 
@@ -170,6 +244,7 @@ def download_exam():
     if os.path.exists(exam_path):
         return send_from_directory(directory=base_path, path="Exam.xlsx")
     else:
+        logging.error("Exam.xlsx does not exist.")
         return (
             f"<html><body><h1>Error</h1><h2>Error Number: 404</h2><p>Exam.xlsx does not exist.</p></body></html>",
             404,
