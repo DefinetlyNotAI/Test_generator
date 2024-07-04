@@ -48,3 +48,6 @@ def framework():
             code = 500
 
     return msg, code
+
+
+framework()

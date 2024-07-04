@@ -58,6 +58,9 @@ To use this do the following steps:
    - `db.config`: This should rarely change and be made from a person, it decides the exam generation parameters.
 5) Now you can use the framework to create, manage, and distribute exams by executing `waitress-serve --listen=*:5000 wsgi_server:app`.
 
+The server also outputs a `Server.log` file which can be used to troubleshoot issues as it logs all requests and responses.
+It contains the message's output in RAW TEXT format and the HTTP status code with a timestamp.
+
 ## File Formats 📃
 
 ### JSON Format 🦾

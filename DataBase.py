@@ -688,6 +688,13 @@ def generate_exam(questions, config_data, exclude_list):
 
 
 def read_api():
+    """
+    Reads the API configuration from the 'API.json' file and extracts the API, username, password, and exclusion titles.
+
+    Returns:
+    - tuple: A tuple containing the API, username, password, and exclusion titles.
+    - str: If an exception occurs, returns a formatted error message.
+    """
     try:
         with open("API.json") as f:
             config = json.load(f)
@@ -703,6 +710,30 @@ def read_api():
 
 # Main execution flow
 def exam_generator(username):
+    """
+    Generates an exam based on the provided username.
+
+    Args:
+        username (str): The username of the user.
+
+    Returns:
+        str or tuple: If any of the steps fail, a string with an error message and status code is returned.
+        Otherwise, a tuple with the generated exam, total points, difficulty ratios, and total titles is returned.
+
+    Raises:
+        Exception: If any error occurs during the execution of the function.
+
+    This function reads a CSV file and a config file, validates them, and generates an exam based on the provided username.
+    It checks if the file "Exam.txt" exists and deletes it if it does. Then, it writes the generated exam to the file.
+    After that, it creates an Excel file from the text file and returns a message with information about the generated exam.
+
+    Note:
+        - The function assumes that the "Test.csv" file and the "db.config" file exist in the same directory as the script.
+        - The function assumes that the "Exam.txt" file does not exist before running.
+        - The function assumes that the config file contains the necessary keys for reading the CSV file, generating the exam, and creating the Excel file.
+        - The function assumes that the CSV file contains the necessary columns for generating the exam.
+        - The function assumes that the "create_excel_from_txt" function is defined and returns a string with an error message if it fails.
+    """
     try:
         # Read the CSV file and validate the config file
         questions = read_csv("Test.csv")
@@ -799,7 +830,7 @@ def database_thread():
             elif api == "RUR":
                 DATA = um.remove(username, password)
             else:
-                DATA = "LIST Invalid API, 404"
+                DATA = "LIST Invalid API && 404"
 
             return DATA
 
