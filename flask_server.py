@@ -1,7 +1,7 @@
-from datetime import datetime
 from flask import Flask, request, render_template, send_from_directory
-from DataBase import *
+from DataBase import database_thread
 import os
+from datetime import datetime
 
 
 class Logger:
@@ -15,11 +15,11 @@ class Logger:
             None
         """
         # Define the filename
-        self.filename = 'Server.log'
+        self.filename = "Server.log"
 
         # Check if the file exists and create it if it doesn't
         if not os.path.exists(self.filename):
-            with open(self.filename, 'w'):
+            with open(self.filename, "w"):
                 pass  # Empty file content is fine here since we append logs
 
     @staticmethod
@@ -48,8 +48,8 @@ class Logger:
         Returns:
             None
         """
-        with open(self.filename, 'a') as f:
-            f.write(f'ERROR: {message} at {self.timestamp()}\n')
+        with open(self.filename, "a") as f:
+            f.write(f"❌ ERROR: {message} at {self.timestamp()}\n")
 
     def info(self, message):
         """
@@ -61,21 +61,8 @@ class Logger:
         Returns:
             None
         """
-        with open(self.filename, 'a') as f:
-            f.write(f'INFO: {message} at {self.timestamp()}\n')
-
-    def warning(self, message):
-        """
-        Writes a warning message to the log file.
-
-        Parameters:
-            message (str): The warning message to be written.
-
-        Returns:
-            None
-        """
-        with open(self.filename, 'a') as f:
-            f.write(f'WARNING: {message} at {self.timestamp()}\n')
+        with open(self.filename, "a") as f:
+            f.write(f"📜 INFO: {message} at {self.timestamp()}\n")
 
 
 # Create an instance of the Logger class and Flask app
@@ -123,7 +110,9 @@ def validate_filename(filename):
     """
     allowed = {"db.config", "API.json", "Test.csv"}
     if filename not in allowed:
-        logger.error(f"Invalid filename: {filename}. Filename must have an allowed extension.")
+        logger.error(
+            f"Invalid filename: {filename}. Filename must have an allowed extension."
+        )
         return False
     if ".." in filename:
         return False
@@ -154,7 +143,9 @@ def upload_file():
         or not validate_filename(api_file.filename)
         or not validate_filename(csv_file.filename)
     ):
-        logger.error(f"Invalid filename(s). Filename must not contain '..' and must have an allowed extension.")
+        logger.error(
+            f"Invalid filename(s). Filename must not contain '..' and must have an allowed extension."
+        )
         return (
             f"<html><body><h1>Error</h1><h2>Error Number: 400</h2><p>Invalid filename(s). Filename must not contain '..' and must have an allowed extension.</p><p>{err_codes[400]}</p></body></html>",
             400,
@@ -191,9 +182,9 @@ def upload_file():
         ):
             # Return an HTML success message
             message = database_thread()
-            if message.startswith("LIST"):
-                # Removing 'LIST' from the beginning of the message
-                message = message.replace("LIST", "", 1)
+            if message.startswith("ERROR"):
+                # Removing 'ERROR' from the beginning of the message
+                message = message.replace("ERROR", "", 1)
 
                 parts = message.split(" && ")
 
@@ -203,7 +194,9 @@ def upload_file():
                     error_message_key = parts[0].strip()
                     error_number = int(parts[1]) if parts[1].isdigit() else None
                 else:
-                    logger.error(f"Invalid message format: {message} with {len(parts)} parts.")
+                    logger.error(
+                        f"Invalid message format: {message} with {len(parts)} parts."
+                    )
                     return "The message does not match the expected format.", 400
 
                 # Checking if the error number exists in err_codes
@@ -228,7 +221,10 @@ def upload_file():
                 with open("password.txt", "r") as f:
                     password = f.read(message)
                 os.remove("password.txt")
-                return f"<html><body><h1>Success</h1>This is your new password: {password}</body></html>", 200
+                return (
+                    f"<html><body><h1>Success</h1>This is your new password: {password}</body></html>",
+                    200,
+                )
 
             else:
                 if not message.startswith("DOWNLOAD"):
@@ -241,13 +237,17 @@ def upload_file():
                         201,
                     )
         else:
-            logger.error("db.config, Test.csv and API.json files are required and cannot be empty.")
+            logger.error(
+                "db.config, Test.csv and API.json files are required and cannot be empty."
+            )
             return (
                 f"<html><body><h1>Error</h1><h2>Error Number: 404</h2><p>db.config, Test.csv and API.json files are required and cannot be empty.</p><p>{err_codes[404]}</p></body></html>",
                 404,
             )
     else:
-        logger.error("db.config, Test.csv and API.json files are required and cannot be empty.")
+        logger.error(
+            "db.config, Test.csv and API.json files are required and cannot be empty."
+        )
         return (
             f"<html><body><h1>Error</h1><h2>Error Number: 404</h2><p>db.config, Test.csv and API.json files are required and cannot be empty.</p><p>{err_codes[404]}</p></body></html>",
             404,
