@@ -22,6 +22,15 @@ err_codes = {
 
 @app.route("/")
 def index():
+    """
+    A route handler for the root URL ("/").
+
+    This function is responsible for rendering the "upload.html" template when the root URL is accessed.
+
+    Returns:
+        The rendered "upload.html" template.
+
+    """
     return render_template("upload.html")
 
 
