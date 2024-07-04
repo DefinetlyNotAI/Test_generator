@@ -34,6 +34,26 @@ def index():
     return render_template("upload.html")
 
 
+# Function to validate filenames
+def validate_filename(filename):
+    """
+    Validates the filename to ensure it has a valid extension and does not contain any harmful characters.
+
+    Parameters:
+        filename (str): The name of the file to be validated.
+
+    Returns:
+        bool: True if the filename is valid, False otherwise.
+    """
+    allowed_extensions = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
+    base, ext = os.path.splitext(filename)
+    if ext.lower() not in allowed_extensions:
+        return False
+    if ".." in filename:
+        return False
+    return True
+
+
 @app.route("/upload", methods=["POST"])
 def upload_file():
     """
@@ -50,6 +70,15 @@ def upload_file():
     config_file = request.files["db.config"]
     api_file = request.files["API.json"]
     csv_file = request.files["Test.csv"]
+
+    # Validate filenames
+    if not validate_filename(config_file.filename) or \
+       not validate_filename(api_file.filename) or \
+       not validate_filename(csv_file.filename):
+        return (
+            f"<html><body><h1>Error</h1><h2>Error Number: 400</h2><p>Invalid filename(s). Filename must not contain '..' and must have an allowed extension.</p><p>{err_codes[400]}</p></body></html>",
+            400,
+        )
 
     if (
         config_file.filename != ""
