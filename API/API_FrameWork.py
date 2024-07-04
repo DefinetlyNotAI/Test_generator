@@ -27,7 +27,7 @@ def framework():
             code = response.status_code
             msg = response.text
         except requests.exceptions.RequestException as e:
-            code = 503  # TODO make this a html error
+            code = 503
             tempMessage = 'Service Unavailable - Server error <p> Most likely a Backend Issue, please report it here:  <a href="https://github.com/DefinetlyNotAI/Test-generator/issues/new/choose">Here</a> </p>'
             msg = f"<html><body><h1>Error</h1><h2>Error Number: {code}</h2><p>{e}</p>{tempMessage}<p></p></body></html>"
 
@@ -46,8 +46,3 @@ def framework():
             code = 500
 
     return msg, code
-
-
-msg, code = framework()
-print(msg)
-print(code)

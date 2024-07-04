@@ -179,12 +179,22 @@ class UserManager:
         Returns:
             str: A success message if the user is successfully removed.
             str: An error message if the password is incorrect.
-            str: An error message if an exception occurs.
+            str: An error message if the username does not exist or an exception occurs.
 
         Raises:
             Exception: If an exception occurs during the execution of the function.
         """
-        try:  # TODO Add a check if the username even exists
+        try:
+            # Check if the username exists
+            self.connect()
+            self.cursor.execute("SELECT * FROM Users WHERE username=?", (username,))
+            user_exists = self.cursor.fetchone()
+            self.disconnect()
+
+            if not user_exists:
+                return "LIST User does not exist. && 404"
+
+            # Proceed with verification and deletion if the user exists
             if self.verify_password(username, password):
                 self.connect()
                 self.cursor.execute('''DELETE FROM Users WHERE username=?''', (username,))
