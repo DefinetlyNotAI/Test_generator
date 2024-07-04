@@ -168,10 +168,12 @@ class UserManager:
             self.disconnect()
 
             password_str = "Password is " + password_new
+            with open("passwords.txt", "w") as f:
+                f.write(password_str)
 
             um.add_exclusion_db(username, exclusion_titles, password_new, "CDB")
 
-            return password_str
+            return "SPECIAL Password Made"
         except Exception as e:
             return f"LIST {e} && 500"
 
