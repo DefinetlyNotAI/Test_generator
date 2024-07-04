@@ -348,5 +348,5 @@ ggshield auth login
 Scan your repository for secrets and vulnerabilities using GGShield:
 
 ```bash
-ggshield secret scan repo "Your Repository Name"
+ggshield secret scan repo "https://github.com/DefinetlyNotAI/Test-generator.git"
 ```
