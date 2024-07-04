@@ -50,11 +50,11 @@ leave the Explain.md file and the updating of the structure file to me.
 When making modifications to the Exam-Generator project,
 please adhere to the following guidelines to ensure consistency and maintainability:
 
-### Documentation and Credit
+### Documentation
 
 - **Comments and Docstrings**: Ensure that all additions and modifications are well-documented through comments and docstrings. Your contributions should be easy to understand and use, adhering to proper programming etiquette.
-  
-- **Credit**: Properly credit your work in the `CREDIT.md` file. Include your name and a brief description of your contributions under the appropriate section.
+
+- **Code Style**: Follow the project's existing code style, You may use `black .` to format your code.
 
 ### Debugging and Proof of Work
 
