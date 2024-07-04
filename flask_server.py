@@ -220,6 +220,13 @@ def upload_file():
                         f"<html><body><h1>Error</h1><h2>Error Number: 501</h2><p>Unknown error - Not Defined</p></body></html>",
                         501,
                     )
+
+            elif message.startswith("SPECIAL"):
+                # This is for password generation logging, ensures the password is not logged.
+                message = message.replace("SPECIAL", "", 1)
+                logger.info("Generated unique password")
+                return f"<html><body><h1>Success</h1>{message}</body></html>", 200
+
             else:
                 if not message.startswith("DOWNLOAD"):
                     logger.info(f"Success: {message}")
