@@ -184,7 +184,7 @@ class UserManager:
         Raises:
             Exception: If an exception occurs during the execution of the function.
         """
-        try:
+        try:  # TODO Add a check if the username even exists
             if self.verify_password(username, password):
                 self.connect()
                 self.cursor.execute('''DELETE FROM Users WHERE username=?''', (username,))

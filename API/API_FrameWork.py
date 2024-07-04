@@ -2,6 +2,13 @@ import requests
 
 
 def framework():
+    """
+    Sends a POST request to the specified URL with the provided files and attempts to download an Exam.xlsx file.
+
+    Returns:
+        msg (str): A message indicating the status of the operation.
+        code (int): The HTTP status code of the response.
+    """
     url = 'http://127.0.0.1:5000/upload'
     download_url = 'http://127.0.0.1:5000/download_exam'
 
@@ -20,8 +27,9 @@ def framework():
             code = response.status_code
             msg = response.text
         except requests.exceptions.RequestException as e:
-            code = 503
-            msg = e
+            code = 503  # TODO make this a html error
+            tempMessage = 'Service Unavailable - Server error <p> Most likely a Backend Issue, please report it here:  <a href="https://github.com/DefinetlyNotAI/Test-generator/issues/new/choose">Here</a> </p>'
+            msg = f"<html><body><h1>Error</h1><h2>Error Number: {code}</h2><p>{e}</p>{tempMessage}<p></p></body></html>"
 
     if code == 201:
         # Attempt to download Exam.xlsx
@@ -30,19 +38,16 @@ def framework():
             if download_response.status_code == 200:
                 with open('Exam.xlsx', 'wb') as f:
                     f.write(download_response.content)
-                msg = f"Files uploaded successfully with status code 200. Exam.xlsx also downloaded successfully. HTML: {msg}"
                 code = 200
             else:
-                msg = f"Failed to download Exam.xlsx. HTML: {msg}"
                 code = 500
         except Exception as e:
-            msg = f"Download failed: {e}"
+            msg = e
             code = 500
-    elif code == 200:
-        msg = f"Files uploaded successfully with status code 200. HTML: {msg}"
-    elif code == 503:
-        msg = f"Upload failed due to HTML: {msg}."
-    else:
-        msg = f"Upload failed with status code {code}. HTML: {msg}"
 
     return msg, code
+
+
+msg, code = framework()
+print(msg)
+print(code)
