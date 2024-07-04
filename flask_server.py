@@ -130,7 +130,6 @@ def upload_file():
     # Check if both required files are present in the request
     # Get the files from the request
     # After saving the files successfully
-    logging.info(f"Upload Request Received.")
     config_file = request.files["db.config"]
     api_file = request.files["API.json"]
     csv_file = request.files["Test.csv"]
@@ -236,7 +235,6 @@ def download_exam():
     """
     Serves the Exam.xlsx file for download.
     """
-    logging.info("Download Request Received")
     # Define the path for the Exam.xlsx file
     exam_path = os.path.join(base_path, "Exam.xlsx")
 
