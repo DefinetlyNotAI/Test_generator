@@ -17,6 +17,17 @@ Welcome to the comprehensive guide for the **Exam Maker** API Framework This doc
   - [RUR API](#rur-api-)
 - [Error Codes](#error-codes-)
 - [Framework Setup](#framework-setup-)
+- [Common Web Server Vulnerabilities](#common-web-server-vulnerabilities-)
+- - [SQL Injection](#sql-injection-)
+- - [Cross-Site Scripting (XSS)](#cross-site-scripting-xss-)
+- - [Broken Authentication](#broken-authentication-)
+- - [Session Hijacking](#session-hijacking-)
+- - [Security Misconfiguration](#security-misconfiguration-)
+- - [Exposure of Sensitive Data](#exposure-of-sensitive-data-)
+- - [Outdated or Vulnerable Components](#outdated-or-vulnerable-components-)
+- - [Cross-Site Request Forgery (CSRF)](#cross-site-request-forgery-csrf-)
+- - [Error Handling Information Exposure](#error-handling-information-exposure-)
+- - [Insufficient Transport Layer Protection](#insufficient-transport-layer-protection-)
 - [Server Setup](#server-setup-)
   - [Vulnerability Scanning Setup](#vulnerability-scanning-setup-)
     - [PIPX Installation](#pipx-installation-)
@@ -194,9 +205,85 @@ The following are codes returned if an error occurred:-
 - 503: Service Unavailable - Only occurs in the Framework, Usually due to the flask server being down
 - 520: Unknown error - Something went wrong, Most likely a Backend Issue, please report it here: https://github.com/DefinetlyNotAI/Test-generator/issues/new/choose
 
-⚠️ CAREFUL from SQL injection on the Frontend, as this is a software that runs on the server using SQLite. ⚠️
+## Common Web Server Vulnerabilities 🛡️
 
-🐛 You may also get a `404` error if the API code is not valid. 🐛
+Understanding the common vulnerabilities in web servers is crucial for implementing effective security measures.
+Here's a breakdown of some of the most prevalent vulnerabilities that may affect this framework:
+
+### SQL Injection 💉
+Occurs when unvalidated input is added directly into an SQL statement, bypassing the intended access controls.
+Mitigation involves using parameterized queries or prepared statements.
+
+You must be careful when using prepared statements, as they can be vulnerable to SQL injection attacks.
+Make sure that whatever is passed to the `Flask` server is properly sanitized.
+
+#### Cross-Site Scripting (XSS) 📜
+An attack where malicious scripts are injected into trusted websites.
+Prevention includes validating and escaping user inputs.
+
+Even though we attempt to not allow except `JSON`, `CSV` and `.config`, the contents may not be sanitised properly,
+So make sure you validate the file contents to not include bad characters or scripts.
+
+### Broken Authentication 🔓
+Weaknesses in the authentication process, allowing unauthorized access to user accounts.
+Implementing strong password policies and two-factor authentication helps mitigate this.
+
+The `Flask` server automatically generates a random session ID for each request,
+as well as create a secure password in the database. Just make sure to keep the password secure when given to the user.
+
+### Session Hijacking 👨‍💻
+Attacker intercepts and takes over a user's session ID. Secure session management practices are essential.
+
+The `Flask` server uses `LOCALHOST` making sure only authorized people in the network and vicinity are allowed access,
+Just make sure the secrecy of the server is intact.
+
+### Security Misconfiguration 🛡️
+Undesired defaults or errors in application setup.
+
+Regular audits and automated deployment processes can help catch and rectify these issues.
+Running [GGShield](#ggshield-scan-) every once in a while is really important, just ignore error's based on the DataBase 
+containing passwords and user information as the `DataBase` by nature is private.
+
+### Exposure of Sensitive Data 👀
+Information leakage due to misconfiguration, leading to unauthorized access to sensitive data. 
+Proper data encryption and access controls are necessary.
+
+Don't allow public access of the `DataBase` as well as unauthorized access to the `Server` room.
+
+### Outdated or Vulnerable Components 📤
+Using outdated or insecure components in web applications. 
+Keeping software up-to-date and regularly scanning for vulnerabilities is crucial.
+
+You may keep `Libraries` outdated unless a security flaw was discovered and fixed, especially for the following libraries:
+```text
+Werkzeug~=3.0.3
+Flask~=3.0.3
+requests~=2.32.3
+waitress~=3.0.0
+```
+To update them, just run `pip install -U Flask Werkzeug requests waitress`.
+Also check the [GitHub Repository Releases](https://github.com/DefinetlyNotAI/Test-generator/releases) section for updates.
+
+### Cross-Site Request Forgery (CSRF) 🙅‍♂️
+Attack where a malicious website tricks a victim into performing actions on a web application in which they're authenticated.
+CSRF tokens can prevent this.
+
+Implement CSRF tokens in the front-end of the software
+
+### Error Handling Information Exposure 📜
+Revealing detailed error messages can give attackers insights into the application's structure and potential vulnerabilities.
+Configuring error pages to display generic messages helps.
+
+The server is in risk with this, as the HTML returned includes a good deal of sensitive information, 
+but this is not shown, rather is sent to the framework itself.
+The front-end of the website should show a generic message based on the variable `code`, 
+while as the variable `msg` should be logged and not shown to the front end user
+
+### Insufficient Transport Layer Protection ❌
+Lack of proper encryption protocols between client and server. Ensuring HTTPS and strong ciphers is mandatory.
+
+This is all on the WEB hosting protocol, as the `Flask` Server runs on `LOCALHOST` it is safe from this vulnerability,
+However the front-end server that communicates with the server may be running on a different protocol which can be insecure.
 
 ## Framework Setup 🛠️
 
@@ -221,11 +308,11 @@ Follow these steps to set up the server:
 2. Install dependencies: `pip install -r requirements.txt`
 3. Start the server: `waitress-serve --listen=*:5000 wsgi_server:app`
 
-## Vulnerability Scanning Setup 🔒
+### Vulnerability Scanning Setup 🔒
 
 Ensure the security of your setup by installing and configuring PIPX and GGShield.
 
-### PIPX Installation 👨‍💻
+#### PIPX Installation 👨‍💻
 
 Run the following commands to install PIPX:
 
@@ -234,7 +321,7 @@ py -m pip install --user pipx
 .\pipx.exe ensurepath
 ```
 
-### GGShield Installation 🛠️
+#### GGShield Installation 🛠️
 
 Install GGShield using PIPX and authenticate your session:
 
@@ -243,7 +330,7 @@ pipx install ggshield
 ggshield auth login
 ```
 
-### GGShield Scan 🛡️
+#### GGShield Scan 🛡️
 
 Scan your repository for secrets and vulnerabilities using GGShield:
 
