@@ -46,9 +46,3 @@ def framework():
         msg = f"Upload failed with status code {code}. HTML: {msg}"
 
     return msg, code
-
-
-info = framework()
-msg, code = info
-print(msg)
-print(code)
