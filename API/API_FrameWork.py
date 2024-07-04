@@ -50,4 +50,4 @@ def framework():
     return msg, code
 
 
-framework()
+print(framework())
