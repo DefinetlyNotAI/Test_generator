@@ -842,12 +842,7 @@ def exam_generator(username):
             return msg
 
         return rf"""DOWNLOAD
-        <p>Exam Generated and saved to Exam.xlsx
-        <p>Exam Generation info;
-        <p>Total Points in exam: {total_points}
-        <p>Number of Questions Included in exam: {len(exam)}
-        <p>Total Titles Used in exam: {len(total_titles)}
-        <p>Difficulty Ratio used: Hard: {round(difficulty_ratios['Hard'], 2)}%, Medium: {round(difficulty_ratios['Medium'], 2)}%, Easy: {round(difficulty_ratios['Easy'], 2)}%
+        <p>Exam Generated and saved to Exam.xlsx <p>Exam Generation info; <p>Total Points in exam: {total_points} <p>Number of Questions Included in exam: {len(exam)} <p>Total Titles Used in exam: {len(total_titles)} <p>Difficulty Ratio used: Hard: {round(difficulty_ratios['Hard'], 2)}%, Medium: {round(difficulty_ratios['Medium'], 2)}%, Easy: {round(difficulty_ratios['Easy'], 2)}%
         """
 
     except Exception as e:
@@ -874,7 +869,7 @@ def database_thread():
                 api, username, password, exclusion_titles = temp
 
             if api == "REC":
-                log.info(f"A request has been made to generate an exam by {username}")
+                log.info(f"A request has been made to generate an exam by the user {username}")
                 if um.verify_password(username, password):
                     DATA = exam_generator(username)
                     if not check_for_LIST(DATA):
@@ -899,7 +894,7 @@ def database_thread():
                     )
             elif api == "RUR":
                 log.info(
-                    f"A request has been made to remove {username} from the database"
+                    f"A request has been made to remove the user {username} from the database"
                 )
                 DATA = um.remove(username, password)
                 if not check_for_LIST(DATA):
