@@ -214,13 +214,14 @@ def upload_file():
                         501,
                     )
 
-            elif message.startswith("SPECIAL") and os.path.exists("password.txt"):
+            elif message.startswith("SPECIAL"):
                 # This is for password generation logging, ensures the password is not logged.
-                message = message.replace("SPECIAL", "", 1)
                 logger.info("Generated unique password")
-                with open("password.txt", "r") as f:
-                    password = f.read(message)
-                os.remove("password.txt")
+
+                with open("passwords.txt", "r") as f:
+                    password = f.read()
+                os.remove("passwords.txt")
+
                 return (
                     f"<html><body><h1>Success</h1>This is your new password: {password}</body></html>",
                     200,

@@ -168,9 +168,8 @@ class UserManager:
             self.conn.commit()
             self.disconnect()
 
-            password_str = "Password is " + password_new
             with open("passwords.txt", "w") as f:
-                f.write(password_str)
+                f.write(password_new)
 
             um.add_exclusion_db(username, exclusion_titles, password_new, "CDB")
 
@@ -397,7 +396,7 @@ class LoggerDB:
             None
         """
         # Define the filename
-        self.filename = "DataBase.log"
+        self.filename = "Server.log"
 
         # Check if the file exists and create it if it doesn't
         if not os.path.exists(self.filename):
