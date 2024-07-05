@@ -431,7 +431,7 @@ class LoggerDB:
             None
         """
         with open(self.filename, "a") as f:
-            f.write(f"📜 INFO: {message} at {self.timestamp()}\n")
+            f.write(f"INFO: {message} at {self.timestamp()}\n")
 
 
 # Function to read and validate the CSV file
