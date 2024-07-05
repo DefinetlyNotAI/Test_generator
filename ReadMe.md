@@ -240,12 +240,22 @@ Mitigation involves using parameterized queries or prepared statements.
 You must be careful when using prepared statements, as they can be vulnerable to SQL injection attacks.
 Make sure that whatever is passed to the `Flask` server is properly sanitized.
 
+Direct mitigation strategies involve using parameterized queries or prepared statements
+to ensure that unvalidated input is safely handled within SQL statements, 
+effectively bypassing intended access controls. 
+The security headers indirectly support this by encouraging browsers to adhere strictly to the declared content types,
+potentially reducing the risk of executing malicious scripts that could exploit SQL injection vulnerabilities
+This is basically implemented in the `Flask` server's `add_security_headers()`.
+
 #### Cross-Site Scripting (XSS) 📜
 An attack where malicious scripts are injected into trusted websites.
 Prevention includes validating and escaping user inputs.
 
 Even though we attempt to not allow except `JSON`, `CSV` and `.config`, the contents may not be sanitised properly,
 So make sure you validate the file contents to not include bad characters or scripts.
+
+We have attempt to mitigate this by preventing MIME type sniffing, ensuring browsers interpret content strictly as declared,
+thus potentially blocking malicious scripts. This is in the `Flask` server's `add_security_headers()`.
 
 ### Broken Authentication 🔓
 Weaknesses in the authentication process, allowing unauthorized access to user accounts.
@@ -265,7 +275,11 @@ Undesired defaults or errors in application setup.
 
 Regular audits and automated deployment processes can help catch and rectify these issues.
 Running [GGShield](#ggshield-scan-) every once in a while is really important, just ignore error's based on the DataBase 
-containing passwords and user information as the `DataBase` by nature is private.
+containing passwords and user information as the `DataBase` by nature is private and these error consist of test cases.
+
+Attempts to enhance this was by controlling browser behaviors, preventing clickjacking, 
+enabling XSS filters, and managing referrer information sharing.
+This is in the `Flask` server's `add_security_headers()`.
 
 ### Exposure of Sensitive Data 👀
 Information leakage due to misconfiguration, leading to unauthorized access to sensitive data. 
@@ -291,7 +305,9 @@ Also check the [GitHub Repository Releases](https://github.com/DefinetlyNotAI/Te
 Attack where a malicious website tricks a victim into performing actions on a web application in which they're authenticated.
 CSRF tokens can prevent this.
 
-Implement CSRF tokens in the front-end of the software
+Implement CSRF tokens in the front-end of the software to mitigate this risk as 
+CSRF attacks occur when a malicious website tricks a victim into performing actions on a web application
+in which they're authenticated.
 
 ### Error Handling Information Exposure 📜
 Revealing detailed error messages can give attackers insights into the application's structure and potential vulnerabilities.
@@ -300,13 +316,21 @@ Configuring error pages to display generic messages helps.
 The server is in risk with this, as the HTML returned includes a good deal of sensitive information, 
 but this is not shown, rather is sent to the framework itself.
 The front-end of the website should show a generic message based on the variable `code`, 
-while as the variable `msg` should be logged and not shown to the front end user
+while as the variable `msg` should be logged and not shown to the front end user, we already log the `msg` variable in a generic way.
+
+We also attempt to fix this by ensuring strict content interpretation, 
+potentially preventing exploitation of detailed error messages.
+ This is in the `Flask` server's `add_security_headers()`.
 
 ### Insufficient Transport Layer Protection ❌
 Lack of proper encryption protocols between client and server. Ensuring HTTPS and strong ciphers is mandatory.
 
 This is all on the WEB hosting protocol, as the `Flask` Server runs on `LOCALHOST` it is safe from this vulnerability,
 However the front-end server that communicates with the server may be running on a different protocol which can be insecure.
+
+We recommend HTTPS and strong ciphers, we try to fix this in our end by enforcing HTTPS, 
+encrypting all client-server communication and protecting against eavesdropping and man-in-the-middle attacks.
+This is in the `Flask` server's `add_security_headers()`.
 
 ## Framework Setup 🛠️
 
