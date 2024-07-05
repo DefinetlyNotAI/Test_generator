@@ -97,6 +97,17 @@ def index():
     return render_template("upload.html")
 
 
+@app.after_request
+def add_security_headers(response):
+    response.headers.add('X-Content-Type-Options', 'nosniff')
+    response.headers.add('X-Frame-Options', 'SAMEORIGIN')
+    response.headers.add('X-XSS-Protection', '1; mode=block')
+    response.headers.add('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload')
+    response.headers.add('Referrer-Policy', 'same-origin')
+    response.headers.add('Cross-Origin-Opener-Policy', 'same-origin')
+    return response
+
+
 # Function to validate filenames
 def validate_filename(filename):
     """
@@ -229,7 +240,7 @@ def upload_file():
 
             else:
                 if not message.startswith("DOWNLOAD"):
-                    logger.info(f"Success: {message}")
+                    logger.info(f"Successfully downloaded exam")
                     return f"<html><body><h1>Success</h1>{message}</body></html>", 200
                 else:
                     logger.info(f"Success: {message}")
