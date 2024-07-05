@@ -874,36 +874,36 @@ def database_thread():
                 api, username, password, exclusion_titles = temp
 
             if api == "REC":
-                log.info(f"A request has been made to generate an exam by {username}.")
+                log.info(f"A request has been made to generate an exam by {username}")
                 if um.verify_password(username, password):
                     DATA = exam_generator(username)
                     if not check_for_LIST(DATA):
-                        log.info("Exam generated successfully based on the request.")
+                        log.info("Exam generated successfully based on the request")
                 else:
                     DATA = "ERROR Invalid Username or Password && 401"
             elif api == "RUG":
                 log.info(
-                    f"A request has been made to create a new user by the following username {username}."
+                    f"A request has been made to create a new user by the following username {username}"
                 )
                 DATA = um.create_db(username, exclusion_titles)
                 if not check_for_LIST(DATA):
-                    log.info("User created successfully based on the request.")
+                    log.info("User created successfully based on the request")
             elif api == "RUD":
                 log.info(
-                    f"A request has been made to add the following exclusion titles {exclusion_titles} to the database for user {username}."
+                    f"A request has been made to add the following exclusion titles {exclusion_titles} to the database for user {username}"
                 )
                 DATA = um.add_exclusion_db(username, exclusion_titles, password)
                 if not check_for_LIST(DATA):
                     log.info(
-                        "Exclusion titles added successfully based on the request."
+                        "Exclusion titles added successfully based on the request"
                     )
             elif api == "RUR":
                 log.info(
-                    f"A request has been made to remove {username} from the database."
+                    f"A request has been made to remove {username} from the database"
                 )
                 DATA = um.remove(username, password)
                 if not check_for_LIST(DATA):
-                    log.info("User removed successfully based on the request.")
+                    log.info("User removed successfully based on the request")
             else:
                 DATA = "ERROR Invalid API && 404"
 
@@ -919,4 +919,5 @@ def database_thread():
 um = UserManager(db_name="users.db")
 log = LoggerDB()  # Initialize the logger with values info, error or warning
 if not os.path.exists("users.db"):
+    log.info("Creating user database from scratch using SQLite")
     um.create_db_initial()
