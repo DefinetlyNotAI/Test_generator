@@ -60,7 +60,7 @@ For example, it can be used to generate exam questions, manage exam databases, a
 To use this do the following steps:
 1) Clone the repository: `git clone https://github.com/DefinetlyNotAI/Test-generator.git`
 2) Navigate to the directory: `cd Test-generator`
-3) Open a terminal and install all required packages: `.\setup.py`
+3) Open a terminal and install all required packages: `.\setup.py` [This will do the [Server Setup](#server-setup-) as well and run the [Server](wsgi_server.py).]
 4) Move the API directory to your other WEB server, BUT make both use the same `LOCALHOST`.
 5) Make the other WEB server initiate the framework `API_FrameWork.py` as well as generate and create the following files:
    - `Test.csv`: This should be made from a person, and include your questions
