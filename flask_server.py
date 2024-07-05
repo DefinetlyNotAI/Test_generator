@@ -49,7 +49,7 @@ class Logger:
             None
         """
         with open(self.filename, "a") as f:
-            f.write(f"❌ ERROR: {message} at {self.timestamp()}\n")
+            f.write(f"ERROR: {message} at {self.timestamp()}\n")
 
     def info(self, message):
         """
@@ -62,7 +62,7 @@ class Logger:
             None
         """
         with open(self.filename, "a") as f:
-            f.write(f"📜 INFO: {message} at {self.timestamp()}\n")
+            f.write(f"INFO: {message} at {self.timestamp()}\n")
 
 
 # Create an instance of the Logger class and Flask app
