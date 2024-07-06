@@ -99,12 +99,14 @@ def index():
 
 @app.after_request
 def add_security_headers(response):
-    response.headers.add('X-Content-Type-Options', 'nosniff')
-    response.headers.add('X-Frame-Options', 'SAMEORIGIN')
-    response.headers.add('X-XSS-Protection', '1; mode=block')
-    response.headers.add('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload')
-    response.headers.add('Referrer-Policy', 'same-origin')
-    response.headers.add('Cross-Origin-Opener-Policy', 'same-origin')
+    response.headers.add("X-Content-Type-Options", "nosniff")
+    response.headers.add("X-Frame-Options", "SAMEORIGIN")
+    response.headers.add("X-XSS-Protection", "1; mode=block")
+    response.headers.add(
+        "Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload"
+    )
+    response.headers.add("Referrer-Policy", "same-origin")
+    response.headers.add("Cross-Origin-Opener-Policy", "same-origin")
     return response
 
 
@@ -150,9 +152,9 @@ def upload_file():
 
     # Validate filenames
     if (
-            not validate_filename(config_file.filename)
-            or not validate_filename(api_file.filename)
-            or not validate_filename(csv_file.filename)
+        not validate_filename(config_file.filename)
+        or not validate_filename(api_file.filename)
+        or not validate_filename(csv_file.filename)
     ):
         logger.error(
             f"Invalid filename(s). Filename must not contain '..' and must have an allowed extension."
@@ -163,9 +165,9 @@ def upload_file():
         )
 
     if (
-            config_file.filename != ""
-            and api_file.filename != ""
-            and csv_file.filename != ""
+        config_file.filename != ""
+        and api_file.filename != ""
+        and csv_file.filename != ""
     ):
 
         # Get the file names
@@ -187,9 +189,9 @@ def upload_file():
         csv_file.save(csv_filename)
 
         if (
-                os.path.exists("db.config")
-                and os.path.exists("API.json")
-                and os.path.exists("Test.csv")
+            os.path.exists("db.config")
+            and os.path.exists("API.json")
+            and os.path.exists("Test.csv")
         ):
             # Return an HTML success message
             message = database_thread()
@@ -208,7 +210,11 @@ def upload_file():
                     logger.error(
                         f"Invalid message format: {message} with {len(parts)} parts."
                     )
-                    return "The message does not match the expected format.", 400
+                    tempMessage = "The message does not match the expected format."
+                    return (
+                        f"<html><body><h1>Error</h1><h2>Error Number: 400</h2><p>{tempMessage}</p></body></html>",
+                        400,
+                    )
 
                 # Checking if the error number exists in err_codes
                 if error_number in err_codes:
@@ -247,7 +253,10 @@ def upload_file():
                     )
                 elif message == "LOG":
                     logger.info(f"Successfully received request to download log")
-                    return f"<html><body><h1>Success</h1>{message.replace('SUCCESS', '', 1)}</body></html>", 202
+                    return (
+                        f"<html><body><h1>Success</h1>{message.replace('SUCCESS', '', 1)}</body></html>",
+                        202,
+                    )
                 else:
                     logger.info(f"Successfully downloaded exam")
                     return f"<html><body><h1>Success</h1>{message}</body></html>", 200
@@ -301,7 +310,10 @@ def download_log():
     if os.path.exists(log_path):
         return send_from_directory(directory=base_path, path="Server.log")
     else:
-        return f"<html><body><h1>Error</h1><h2>Error Number: 404</h2><p>Server.log does not exist.</p></body></html>", 404
+        return (
+            f"<html><body><h1>Error</h1><h2>Error Number: 404</h2><p>Server.log does not exist.</p></body></html>",
+            404,
+        )
 
 
 if __name__ == "__main__":

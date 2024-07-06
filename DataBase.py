@@ -881,7 +881,9 @@ def database_thread():
                 api, username, password, exclusion_titles = temp
 
             if api == "REC":
-                log.info(f"A request has been made to generate an exam by the user {username}")
+                log.info(
+                    f"A request has been made to generate an exam by the user {username}"
+                )
                 if um.verify_password(username, password):
                     DATA = exam_generator(username)
                     if not check_ERROR(DATA):
@@ -901,9 +903,7 @@ def database_thread():
                 )
                 DATA = um.add_exclusion_db(username, exclusion_titles, password)
                 if not check_ERROR(DATA):
-                    log.info(
-                        "Exclusion titles added successfully based on the request"
-                    )
+                    log.info("Exclusion titles added successfully based on the request")
             elif api == "RUR":
                 log.info(
                     f"A request has been made to remove the user {username} from the database"

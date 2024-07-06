@@ -25,7 +25,7 @@ def framework():
 
     # Open files within the same scope as the POST request to ensure they stay open
     with open("db.config", "rb") as config_file, open(
-            "API.json", "rb"
+        "API.json", "rb"
     ) as api_file, open(
         "Test.csv", "rb"
     ) as csv_file:  # Optional, can be omitted if not needed
@@ -60,6 +60,7 @@ def framework():
             code = 500
 
     elif code == 202:
+        # Attempt to download Server.log
         try:
             download_response = requests.get(log_download_url)
             if download_response.status_code == 200:
