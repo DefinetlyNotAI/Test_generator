@@ -11,7 +11,7 @@ from configparser import ConfigParser
 import pandas as pd
 
 
-def check_for_LIST(value):
+def check_ERROR(value):
     """
     Check if the input value contains the word 'ERROR'.
 
@@ -303,18 +303,18 @@ class UserManager:
 
         Note:
             - The `um.add_exclusion_db_main()` function is called to add the exclusion to the database.
-            - If the `check_for_LIST()` function returns True for the value returned by `um.add_exclusion_db_main()`, it is returned.
+            - If the `check_ERROR()` function returns True for the value returned by `um.add_exclusion_db_main()`, it is returned.
             - If the `special` parameter is not provided, the `um.add_exclusion_db_main()` function is called with a comma and the password as arguments.
             - If an error occurs, a formatted string indicating the error is returned.
 
         """
         try:
             value = um.add_exclusion_db_main(name, titles, password)
-            if check_for_LIST(value):
+            if check_ERROR(value):
                 return value
             if not special:
                 msg = um.add_exclusion_db_main(name, ",", password)
-                if check_for_LIST(msg):
+                if check_ERROR(msg):
                     return msg
             return value
         except Exception as e:
@@ -370,14 +370,14 @@ class UserManager:
         try:
             # Safely accessing the values from the user_data dictionary
             username = data.get("Username", "Unknown")
-            if check_for_LIST(username):
+            if check_ERROR(username):
                 return username
             password = data.get("Password", "Unknown")
-            if check_for_LIST(password):
+            if check_ERROR(password):
                 return username
             exclusion_titles = data.get("Exclusion_titles", [])
             if isinstance(exclusion_titles, str):
-                if check_for_LIST(exclusion_titles):
+                if check_ERROR(exclusion_titles):
                     return exclusion_titles
 
             return username, password, exclusion_titles
@@ -790,22 +790,22 @@ def exam_generator(username):
         # Read the CSV file and validate the config file
         questions = read_csv("Test.csv")
         if isinstance(questions, str):
-            if check_for_LIST(questions):
+            if check_ERROR(questions):
                 return questions
 
         config_data = read_config("db.config")
         if isinstance(config_data, str):
-            if check_for_LIST(config_data):
+            if check_ERROR(config_data):
                 return config_data
 
         Exclude_list = um.get_excluded_titles(username)
         if isinstance(Exclude_list, str):
-            if check_for_LIST(Exclude_list):
+            if check_ERROR(Exclude_list):
                 return Exclude_list
 
         temp = generate_exam(questions, config_data, Exclude_list)
         if isinstance(temp, str):
-            if check_for_LIST(temp):
+            if check_ERROR(temp):
                 return temp
         else:
             exam, total_points, difficulty_ratios, total_titles = temp
@@ -838,7 +838,7 @@ def exam_generator(username):
         time.sleep(1)
 
         msg = create_excel_from_txt(config_data["debug"])
-        if check_for_LIST(msg):
+        if check_ERROR(msg):
             return msg
 
         return rf"""DOWNLOAD
@@ -860,10 +860,22 @@ def database_thread():
     try:
 
         def init():
+            """
+            Initializes the UserManager and API values based on the API configuration in the 'API.json' file.
+
+            Returns:
+            - str: If the API configuration is invalid, returns a formatted error message.
+            - str: If the API is 'REC', generates an exam based on the request and returns a formatted message.
+            - str: If the API is 'RUG', creates a new user in the database based on the request and returns a formatted message.
+            - str: If the API is 'RUD', adds exclusion titles to the database for a user based on the request and returns a formatted message.
+            - str: If the API is 'RUR', removes a user from the database based on the request and returns a formatted message.
+            - str: If the API is 'RLR', sends the server log and returns a formatted message.
+            - str: If the API is invalid, returns a formatted error message.
+            """
             # Initialize the UserManager and API values
             temp = read_api()
             if isinstance(temp, str):
-                if check_for_LIST(temp):
+                if check_ERROR(temp):
                     return temp
             else:
                 api, username, password, exclusion_titles = temp
@@ -872,7 +884,7 @@ def database_thread():
                 log.info(f"A request has been made to generate an exam by the user {username}")
                 if um.verify_password(username, password):
                     DATA = exam_generator(username)
-                    if not check_for_LIST(DATA):
+                    if not check_ERROR(DATA):
                         log.info("Exam generated successfully based on the request")
                 else:
                     DATA = "ERROR Invalid Username or Password && 401"
@@ -881,14 +893,14 @@ def database_thread():
                     f"A request has been made to create a new user by the following username {username}"
                 )
                 DATA = um.create_db(username, exclusion_titles)
-                if not check_for_LIST(DATA):
+                if not check_ERROR(DATA):
                     log.info("User created successfully based on the request")
             elif api == "RUD":
                 log.info(
                     f"A request has been made to add the following exclusion titles {exclusion_titles} to the database for user {username}"
                 )
                 DATA = um.add_exclusion_db(username, exclusion_titles, password)
-                if not check_for_LIST(DATA):
+                if not check_ERROR(DATA):
                     log.info(
                         "Exclusion titles added successfully based on the request"
                     )
@@ -897,8 +909,10 @@ def database_thread():
                     f"A request has been made to remove the user {username} from the database"
                 )
                 DATA = um.remove(username, password)
-                if not check_for_LIST(DATA):
+                if not check_ERROR(DATA):
                     log.info("User removed successfully based on the request")
+            elif api == "RLR":
+                DATA = "LOG"
             else:
                 DATA = "ERROR Invalid API && 404"
 

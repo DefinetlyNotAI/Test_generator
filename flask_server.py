@@ -1,7 +1,7 @@
-from flask import Flask, request, render_template, send_from_directory
-from DataBase import database_thread
 import os
 from datetime import datetime
+from flask import Flask, request, render_template, send_from_directory
+from DataBase import database_thread
 
 
 class Logger:
@@ -150,9 +150,9 @@ def upload_file():
 
     # Validate filenames
     if (
-        not validate_filename(config_file.filename)
-        or not validate_filename(api_file.filename)
-        or not validate_filename(csv_file.filename)
+            not validate_filename(config_file.filename)
+            or not validate_filename(api_file.filename)
+            or not validate_filename(csv_file.filename)
     ):
         logger.error(
             f"Invalid filename(s). Filename must not contain '..' and must have an allowed extension."
@@ -163,9 +163,9 @@ def upload_file():
         )
 
     if (
-        config_file.filename != ""
-        and api_file.filename != ""
-        and csv_file.filename != ""
+            config_file.filename != ""
+            and api_file.filename != ""
+            and csv_file.filename != ""
     ):
 
         # Get the file names
@@ -187,9 +187,9 @@ def upload_file():
         csv_file.save(csv_filename)
 
         if (
-            os.path.exists("db.config")
-            and os.path.exists("API.json")
-            and os.path.exists("Test.csv")
+                os.path.exists("db.config")
+                and os.path.exists("API.json")
+                and os.path.exists("Test.csv")
         ):
             # Return an HTML success message
             message = database_thread()
@@ -239,15 +239,18 @@ def upload_file():
                 )
 
             else:
-                if not message.startswith("DOWNLOAD"):
-                    logger.info(f"Successfully downloaded exam")
-                    return f"<html><body><h1>Success</h1>{message}</body></html>", 200
-                else:
+                if message.startswith("DOWNLOAD"):
                     logger.info(f"Success: {message}")
                     return (
                         f"<html><body><h1>Success</h1>{message.replace('DOWNLOAD', '', 1)}</body></html>",
                         201,
                     )
+                elif message == "LOG":
+                    logger.info(f"Successfully received request to download log")
+                    return f"<html><body><h1>Success</h1>{message.replace('SUCCESS', '', 1)}</body></html>", 202
+                else:
+                    logger.info(f"Successfully downloaded exam")
+                    return f"<html><body><h1>Success</h1>{message}</body></html>", 200
         else:
             logger.error(
                 "db.config, Test.csv and API.json files are required and cannot be empty."
@@ -283,6 +286,22 @@ def download_exam():
             f"<html><body><h1>Error</h1><h2>Error Number: 404</h2><p>Exam.xlsx does not exist.</p></body></html>",
             404,
         )
+
+
+@app.route("/download_log", methods=["GET"])
+def download_log():
+    """
+    Serves the Server.log file for download, accessible only to admin users.
+    """
+
+    # Define the path for the Server.log file
+    log_path = os.path.join(base_path, "Server.log")
+
+    # Check if the file exists before attempting to send it
+    if os.path.exists(log_path):
+        return send_from_directory(directory=base_path, path="Server.log")
+    else:
+        return f"<html><body><h1>Error</h1><h2>Error Number: 404</h2><p>Server.log does not exist.</p></body></html>", 404
 
 
 if __name__ == "__main__":

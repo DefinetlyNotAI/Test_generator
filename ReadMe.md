@@ -22,6 +22,7 @@
   - [RUG API](#rug-api-)
   - [RUD API](#rud-api-)
   - [RUR API](#rur-api-)
+  - [RLR API](#rlr-api-)
 - [Error Codes](#error-codes-)
 - [Framework Setup](#framework-setup-)
 - [Common Web Server Vulnerabilities](#common-web-server-vulnerabilities-)
@@ -137,9 +138,9 @@ If debug is true, the headers would be ['URL', 'Question', 'Title', 'Difficulty'
 
 **Returns WEB UI:-**
 It will also return either one of 2 scenarios, If an error occurs, 
-it makes it return an error code in html unless using the framework where it will return it in text.
+it makes it return an error code in html unless using the `log` where it will return it in text.
 OR if everything works fine it will return a confirmation message in html,
-unless using the framework where it will return it in text.
+unless using the `log` where it will return it in text.
 
 **Required Format:-**
 API.json file format should be at minimum:
@@ -161,9 +162,9 @@ Request User Generation
 
 **Returns:-**
 It will also return either one of 2 scenarios, If an error occurs,
-it makes it return an error code in html unless using the framework where it will return it in text.
+it makes it return an error code in html unless using the `log` where it will return it in text.
 OR if everything works fine it will return a confirmation message in html,
-unless using the framework where it will return it in text, usually it should also give you the password.
+unless using the `log` where it will return it in text, usually it should also give you the password.
 
 **Required Format:-**
 API.json file format should be at minimum:
@@ -180,9 +181,9 @@ Request User DB Update
 
 **Returns:-**
 It will also return either one of 2 scenarios, If an error occurs, 
-it makes it return an error code in html unless using the framework where it will return it in text.
+it makes it return an error code in html unless using the `log` where it will return it in text.
 OR if everything works fine it will return a confirmation message in html,
-unless using the framework where it will return it in text.
+unless using the `log` where it will return it in text.
 
 **Required Format:-**
 API.json file format should be at minimum:
@@ -200,12 +201,13 @@ Request User Removal
 
 **Returns:-**
 It will also return either one of 2 scenarios, If an error occurs, 
-it makes it return an error code in html unless using the framework where it will return it in text.
+it makes it return an error code in html unless using the `log` where it will return it in text.
 OR if everything works fine it will return a confirmation message in html,
-unless using the framework where it will return it in text.
+unless using the `log` where it will return it in text.
 
 **Required Format:-**
 API.json file format should be at minimum:
+
 ```text
 {
     "api": "RUR",
@@ -213,6 +215,27 @@ API.json file format should be at minimum:
     "password": "REPLACE_WITH_PASSWORD",
 }
 ```
+
+### RLR API 🔍
+
+Request Log Retrieval
+
+**Returns:-**
+It will also return either one of 2 scenarios, If an error occurs, 
+it makes it return an error code in html unless using the `log` where it will return it in text.
+OR if everything works fine it will return a confirmation message in html,
+unless using the `log` where it will return it in text as well as the `Server.log`.
+
+**Required Format:-**
+API.json file format should be at minimum:
+```text
+{
+    "api": "RLR",
+}
+```
+
+Do be careful, this sends the log back to you, by all means you need to be careful while using it.
+
 ## Error Codes ❌
 
 In case of errors, the system returns specific HTTP status codes.
