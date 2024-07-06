@@ -32,6 +32,49 @@ def check_ERROR(value):
     return False
 
 
+def check_admin_password(password):
+    """
+    Check if the provided password matches the password of the 'admin' user in the SQLite database.
+
+    Args:
+        password (str): The password to be checked.
+
+    Returns:
+        bool: True if the password matches, False otherwise.
+
+    Raises:
+        Exception: If an error occurs while executing the SQL query or fetching the result.
+
+    """
+    # Connect to the SQLite database (or create it if it doesn't exist)
+    conn = sqlite3.connect('users.db')
+
+    # Create a cursor object using the cursor() method
+    cursor = conn.cursor()
+
+    # SQL query to select the admin user's username and password
+    query = "SELECT username, password FROM Users WHERE username='admin'"
+
+    try:
+        # Execute the query
+        cursor.execute(query)
+
+        # Fetch the result
+        result = cursor.fetchone()
+
+        # Check if the fetched row exists and the password matches
+        if result and result[1] == password:  # Compare the second column (index 1) with the provided password
+            return True
+        else:
+            return False
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return False
+    finally:
+        # Close the connection
+        conn.close()
+
+
 class UserManager:
     # Class to handle user management
     def __init__(self, db_name="users.db"):
@@ -131,7 +174,8 @@ class UserManager:
                 if password == stored_password:
                     return True
             return False
-        except Exception:
+        except Exception as e:
+            log.info(f"An error occurred while verifying the password. as {e}")
             return False
 
     def create_db(self, username, exclusion_titles, password=None):
@@ -915,7 +959,7 @@ def database_thread():
                 log.info(
                     f"A request has been made to remove the user {username} from the database"
                 )
-                if username is not "admin":
+                if username != "admin":
                     DATA = um.remove(username, password)
                     if not check_ERROR(DATA):
                         log.info("User removed successfully based on the request")
@@ -923,7 +967,7 @@ def database_thread():
                     DATA = "ERROR Admin cannot be removed && 401"
 
             elif api == "RLR":
-                if um.verify_password(username, password) and username == "admin":
+                if check_admin_password(password):
                     DATA = "LOG"
                 else:
                     DATA = "ERROR Invalid Username or Password && 401"
@@ -948,6 +992,8 @@ if not os.path.exists("users.db"):
     try:
         with open("Admin.secrets", "r") as admin:
             password = admin.read()
-    except Exception:
+    except Exception as e:
+        log.info("Admin password not found" + str(e))
         password = None
     um.create_db("admin", "", password)
+    os.remove("passwords.txt")
