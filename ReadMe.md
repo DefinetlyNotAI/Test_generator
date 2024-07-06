@@ -62,12 +62,13 @@ To use this do the following steps:
 1) Clone the repository: `git clone https://github.com/DefinetlyNotAI/Test-generator.git`
 2) Navigate to the directory: `cd Test-generator`
 3) Open a terminal and install all required packages: `.\setup.ps1` [This will do the [Server Setup](#server-setup-) as well and run the [Server](wsgi_server.py).]
-4) Move the API directory to your other WEB server, BUT make both use the same `LOCALHOST`.
-5) Make the other WEB server initiate the framework `API_FrameWork.py` as well as generate and create the following files:
+4) Create a new file in the root directory, call it `Admin.secret` and add your admin password.
+5) Move the API directory to your other WEB server, BUT make both use the same `LOCALHOST`.
+6) Make the other WEB server initiate the framework `API_FrameWork.py` as well as generate and create the following files:
    - `Test.csv`: This should be made from a person, and include your questions
    - `API.json`: This should be dynamically changed as it decides what the server should do, check [Table of contents](#table-of-contents-) for more details.
    - `db.config`: This should rarely change and be made from a person, it decides the exam generation parameters.
-6) Now you can use the framework to create, manage, and distribute exams by executing `waitress-serve --listen=*:5000 wsgi_server:app`.
+7) Now you can use the framework to create, manage, and distribute exams by executing `waitress-serve --listen=*:5000 wsgi_server:app`.
 
 
 ## Logging Information 📝

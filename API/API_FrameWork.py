@@ -92,6 +92,3 @@ def framework():
         msg = "An unexpected error occurred."
 
     return msg, code
-
-
-print(framework())

@@ -134,13 +134,14 @@ class UserManager:
         except Exception:
             return False
 
-    def create_db(self, username, exclusion_titles):
+    def create_db(self, username, exclusion_titles, password=None):
         """
         Creates a new database entry for a user with the given username and exclusion titles.
 
         Args:
             username (str): The username of the user.
             exclusion_titles (str): The exclusion titles for the user.
+            password (str, optional): The password for the user. Defaults to None.
 
         Returns:
             str: The password for the newly created user, or an error message if the username already exists or an exception occurs.
@@ -154,11 +155,14 @@ class UserManager:
             existing_user = self.cursor.fetchone()
             self.disconnect()
 
+            alphabet = string.ascii_letters + string.digits
+            if password is None:
+                password_new = "".join(secrets.choice(alphabet) for _ in range(12))
+            else:
+                password_new = password
+
             if existing_user:
                 return "ERROR Username already exists. && 409"
-
-            alphabet = string.ascii_letters + string.digits
-            password_new = "".join(secrets.choice(alphabet) for _ in range(12))
 
             self.connect()
             self.cursor.execute(
@@ -476,13 +480,13 @@ def read_csv(file_path):
                 # Populate the list with indices to check, excluding the URL column index
                 for i in range(len(row)):
                     if (
-                        i != 4
+                            i != 4
                     ):  # Excluding the URL column index (assuming it's always the 5th column)
                         indices_to_check.append(i)
 
                 # Use a generator expression to strip values and check for emptiness across the specified indices
                 if not all(
-                    value.strip() for value in (row[i] for i in indices_to_check)
+                        value.strip() for value in (row[i] for i in indices_to_check)
                 ):
                     return "ERROR Empty value found in CSV. && 400"
 
@@ -569,8 +573,8 @@ def read_config(file_path):
         if missing_options:
             return f"ERROR Missing required options in config file: {missing_options} && 400"
         for option in required_options[
-            :-2
-        ]:  # Exclude 'debug' and 'points' from this check
+                      :-2
+                      ]:  # Exclude 'debug' and 'points' from this check
             try:
                 int(config.get(section, option))
             except ValueError:
@@ -578,7 +582,7 @@ def read_config(file_path):
                     f"ERROR Invalid value type for {option}: expected integer. && 400"
                 )
         if config.getint(section, "hard") + config.getint(
-            section, "medium"
+                section, "medium"
         ) + config.getint(section, "easy") != config.getint(
             section, "questions_amount"
         ):
@@ -890,6 +894,7 @@ def database_thread():
                         log.info("Exam generated successfully based on the request")
                 else:
                     DATA = "ERROR Invalid Username or Password && 401"
+
             elif api == "RUG":
                 log.info(
                     f"A request has been made to create a new user by the following username {username}"
@@ -897,6 +902,7 @@ def database_thread():
                 DATA = um.create_db(username, exclusion_titles)
                 if not check_ERROR(DATA):
                     log.info("User created successfully based on the request")
+
             elif api == "RUD":
                 log.info(
                     f"A request has been made to add the following exclusion titles {exclusion_titles} to the database for user {username}"
@@ -904,15 +910,24 @@ def database_thread():
                 DATA = um.add_exclusion_db(username, exclusion_titles, password)
                 if not check_ERROR(DATA):
                     log.info("Exclusion titles added successfully based on the request")
+
             elif api == "RUR":
                 log.info(
                     f"A request has been made to remove the user {username} from the database"
                 )
-                DATA = um.remove(username, password)
-                if not check_ERROR(DATA):
-                    log.info("User removed successfully based on the request")
+                if username is not "admin":
+                    DATA = um.remove(username, password)
+                    if not check_ERROR(DATA):
+                        log.info("User removed successfully based on the request")
+                else:
+                    DATA = "ERROR Admin cannot be removed && 401"
+
             elif api == "RLR":
-                DATA = "LOG"
+                if um.verify_password(username, password) and username == "admin":
+                    DATA = "LOG"
+                else:
+                    DATA = "ERROR Invalid Username or Password && 401"
+
             else:
                 DATA = "ERROR Invalid API && 404"
 
@@ -930,3 +945,9 @@ log = LoggerDB()  # Initialize the logger with values info, error or warning
 if not os.path.exists("users.db"):
     log.info("Creating user database from scratch using SQLite")
     um.create_db_initial()
+    try:
+        with open("Admin.secrets", "r") as admin:
+            password = admin.read()
+    except Exception:
+        password = None
+    um.create_db("admin", "", password)
