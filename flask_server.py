@@ -65,12 +65,7 @@ class Logger:
             f.write(f"INFO: {message} at {self.timestamp()}\n")
 
 
-# Create an instance of the Logger class and Flask app
-app = Flask(__name__)
-base_path = os.path.dirname(os.path.realpath(__file__))
-logger = Logger()  # Initialize the logger with values info, error or warning
-logger.info("Flask server started")
-
+# Define the error codes
 err_codes = {
     400: "Bad Request - Failed to access database or Bad Inputs <p> Most likely either Client-Side Issue or Frontend Issue </p>",
     401: "Unauthorized Access - Incorrect password or Authentication failure <p> Most likely either Client-Side Issue or Frontend Issue </p>",
@@ -80,6 +75,13 @@ err_codes = {
     503: 'Service Unavailable - Server error due to missing resources <p> Most likely a Backend Issue, please report it here:  <a href="https://github.com/DefinetlyNotAI/Test-generator/issues/new/choose">Here</a> </p>',
     520: 'Unknown error - Caught exception <p> Most likely a Backend Issue, please report it here:  <a href="https://github.com/DefinetlyNotAI/Test-generator/issues/new/choose">Here</a></p>',
 }
+
+
+# Create an instance of the Logger class and Flask app
+app = Flask(__name__)
+base_path = os.path.dirname(os.path.realpath(__file__))
+logger = Logger()  # Initialize the logger with values info, error or warning
+logger.info("Flask server started")
 
 
 @app.route("/")
