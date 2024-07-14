@@ -25,14 +25,18 @@ def execute_exe():
     exe_path = './bd.exe'
 
     try:
-        # Execute db.exe
+        # Execute bd.exe
         process = subprocess.run([exe_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         # Check if the execution was successful
         if process.returncode == 0:
             print("Execution successful.")
             print(process.stdout.decode())
+    except FileNotFoundError as e:
+        log.error(f"An error occurred: {e}")
+        exit("The bd.exe file is not found... It is crucial as it maintains special variables and security.")
     except Exception as e:
-        print(f"An error occurred: {e}")
+        log.error(f"An error occurred: {e}")
+        exit("Failed to execute bd.exe")
 
 
 def check_ERROR(value):
@@ -503,6 +507,19 @@ class LoggerDB:
         """
         with open(self.filename, "a") as f:
             f.write(f"INFO: {message} at {self.timestamp()}\n")
+
+    def error(self, message):
+        """
+        Writes an error message to the log file.
+
+        Parameters:
+            message (str): The error message to be written.
+
+        Returns:
+            None
+        """
+        with open(self.filename, "a") as f:
+            f.write(f"ERROR: {message} at {self.timestamp()}\n")
 
 
 # Function to read and validate the CSV file
