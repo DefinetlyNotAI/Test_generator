@@ -6,16 +6,15 @@ from flask_server import app  # Import your Flask app
 
 def execute_exe():
     """
-    Executes the db.exe file located at the specified path.
+    Executes the bd.exe file located at the specified path.
 
     This function runs the db.exe file using 'subprocess.run' and checks if the execution was successful by verifying the return code of the process.
     If the execution is successful, it prints "Execution successful." along with the decoded stdout.
 
     Exceptions are caught and if any error occurs during execution, it prints the error message.
     """
-    # Specify the path to db.exe. Use '.' to indicate the current directory if db.exe is there.
-    # Replace 'path_to_db.exe' with the actual path to your db.exe file if it's not in the same directory as this script.
-    exe_path = './db.exe'
+    # Specify the path to bd.exe. Use '.' to indicate the current directory if bd.exe is there.
+    exe_path = './bd.exe'
 
     try:
         # Execute db.exe
