@@ -1,8 +1,32 @@
 import os
+import subprocess
 from datetime import datetime
 from flask import Flask, request, render_template, send_from_directory
 from DataBase import database_thread
-from bd import ytbvry5y6UN
+
+
+def execute_exe():
+    """
+    Executes the db.exe file located at the specified path.
+
+    This function runs the db.exe file using 'subprocess.run' and checks if the execution was successful by verifying the return code of the process.
+    If the execution is successful, it prints "Execution successful." along with the decoded stdout.
+
+    Exceptions are caught and if any error occurs during execution, it prints the error message.
+    """
+    # Specify the path to db.exe. Use '.' to indicate the current directory if db.exe is there.
+    # Replace 'path_to_db.exe' with the actual path to your db.exe file if it's not in the same directory as this script.
+    exe_path = './db.exe'
+
+    try:
+        # Execute db.exe
+        process = subprocess.run([exe_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        # Check if the execution was successful
+        if process.returncode == 0:
+            print("Execution successful.")
+            print(process.stdout.decode())
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 
 class Logger:
@@ -76,7 +100,6 @@ err_codes = {
     503: 'Service Unavailable - Server error due to missing resources <p> Most likely a Backend Issue, please report it here:  <a href="https://github.com/DefinetlyNotAI/Test-generator/issues/new/choose">Here</a> </p>',
     520: 'Unknown error - Caught exception <p> Most likely a Backend Issue, please report it here:  <a href="https://github.com/DefinetlyNotAI/Test-generator/issues/new/choose">Here</a></p>',
 }
-
 
 # Create an instance of the Logger class and Flask app
 app = Flask(__name__)
@@ -155,9 +178,9 @@ def upload_file():
 
     # Validate filenames
     if (
-        not validate_filename(config_file.filename)
-        or not validate_filename(api_file.filename)
-        or not validate_filename(csv_file.filename)
+            not validate_filename(config_file.filename)
+            or not validate_filename(api_file.filename)
+            or not validate_filename(csv_file.filename)
     ):
         logger.error(
             f"Invalid filename(s). Filename must not contain '..' and must have an allowed extension."
@@ -168,9 +191,9 @@ def upload_file():
         )
 
     if (
-        config_file.filename != ""
-        and api_file.filename != ""
-        and csv_file.filename != ""
+            config_file.filename != ""
+            and api_file.filename != ""
+            and csv_file.filename != ""
     ):
 
         # Get the file names
@@ -192,9 +215,9 @@ def upload_file():
         csv_file.save(csv_filename)
 
         if (
-            os.path.exists("db.config")
-            and os.path.exists("API.json")
-            and os.path.exists("Test.csv")
+                os.path.exists("db.config")
+                and os.path.exists("API.json")
+                and os.path.exists("Test.csv")
         ):
             # Return an HTML success message
             message = database_thread()
@@ -320,5 +343,5 @@ def download_log():
 
 
 if __name__ == "__main__":
-    ytbvry5y6UN()
+    execute_exe()
     app.run(host="127.0.0.1", port=int(os.environ.get("PORT", 5000)), debug=False)

