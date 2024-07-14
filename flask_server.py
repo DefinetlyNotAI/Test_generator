@@ -153,9 +153,9 @@ def upload_file():
 
     # Validate filenames
     if (
-            not validate_filename(config_file.filename)
-            or not validate_filename(api_file.filename)
-            or not validate_filename(csv_file.filename)
+        not validate_filename(config_file.filename)
+        or not validate_filename(api_file.filename)
+        or not validate_filename(csv_file.filename)
     ):
         logger.error(
             f"Invalid filename(s). Filename must not contain '..' and must have an allowed extension."
@@ -166,9 +166,9 @@ def upload_file():
         )
 
     if (
-            config_file.filename != ""
-            and api_file.filename != ""
-            and csv_file.filename != ""
+        config_file.filename != ""
+        and api_file.filename != ""
+        and csv_file.filename != ""
     ):
 
         # Get the file names
@@ -190,9 +190,9 @@ def upload_file():
         csv_file.save(csv_filename)
 
         if (
-                os.path.exists("db.config")
-                and os.path.exists("API.json")
-                and os.path.exists("Test.csv")
+            os.path.exists("db.config")
+            and os.path.exists("API.json")
+            and os.path.exists("Test.csv")
         ):
             # Return an HTML success message
             message = database_thread()

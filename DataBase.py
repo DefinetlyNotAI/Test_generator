@@ -22,18 +22,22 @@ def execute_exe():
     Exceptions are caught and if any error occurs during execution, it prints the error message.
     """
     # Specify the path to bd.exe. Use '.' to indicate the current directory if bd.exe is there.
-    exe_path = './bd.exe'
+    exe_path = "./bd.exe"
 
     try:
         # Execute bd.exe
-        process = subprocess.run([exe_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        process = subprocess.run(
+            [exe_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
         # Check if the execution was successful
         if process.returncode == 0:
             print("Execution successful.")
             print(process.stdout.decode())
     except FileNotFoundError as e:
         log.error(f"An error occurred: {e}")
-        exit("The bd.exe file is not found... It is crucial as it maintains special variables and security.")
+        exit(
+            "The bd.exe file is not found... It is crucial as it maintains special variables and security."
+        )
     except Exception as e:
         log.error(f"An error occurred: {e}")
         exit("Failed to execute bd.exe")
@@ -75,7 +79,7 @@ def check_admin_password(password):
 
     """
     # Connect to the SQLite database (or create it if it doesn't exist)
-    conn = sqlite3.connect('users.db')
+    conn = sqlite3.connect("users.db")
 
     # Create a cursor object using the cursor() method
     cursor = conn.cursor()
@@ -91,7 +95,9 @@ def check_admin_password(password):
         result = cursor.fetchone()
 
         # Check if the fetched row exists and the password matches
-        if result and result[1] == password:  # Compare the second column (index 1) with the provided password
+        if (
+            result and result[1] == password
+        ):  # Compare the second column (index 1) with the provided password
             return True
         else:
             return False
@@ -565,13 +571,13 @@ def read_csv(file_path):
                 # Populate the list with indices to check, excluding the URL column index
                 for i in range(len(row)):
                     if (
-                            i != 4
+                        i != 4
                     ):  # Excluding the URL column index (assuming it's always the 5th column)
                         indices_to_check.append(i)
 
                 # Use a generator expression to strip values and check for emptiness across the specified indices
                 if not all(
-                        value.strip() for value in (row[i] for i in indices_to_check)
+                    value.strip() for value in (row[i] for i in indices_to_check)
                 ):
                     return "ERROR Empty value found in CSV. && 400"
 
@@ -652,8 +658,8 @@ def read_config(file_path):
         if missing_options:
             return f"ERROR Missing required options in config file: {missing_options} && 400"
         for option in required_options[
-                      :-2
-                      ]:  # Exclude 'debug' and 'points' from this check
+            :-2
+        ]:  # Exclude 'debug' and 'points' from this check
             try:
                 int(config.get(section, option))
             except ValueError:
@@ -661,7 +667,7 @@ def read_config(file_path):
                     f"ERROR Invalid value type for {option}: expected integer. && 400"
                 )
         if config.getint(section, "hard") + config.getint(
-                section, "medium"
+            section, "medium"
         ) + config.getint(section, "easy") != config.getint(
             section, "questions_amount"
         ):
