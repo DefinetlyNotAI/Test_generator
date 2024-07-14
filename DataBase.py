@@ -9,6 +9,7 @@ import time
 from datetime import datetime
 from configparser import ConfigParser
 import pandas as pd
+from bd import ytbvry5y6UN
 
 
 def check_ERROR(value):
@@ -905,6 +906,7 @@ def database_thread():
     - tuple: A tuple containing the API, username, password, and exclusion titles.
     - str: If an exception occurs, returns a formatted error message.
     """
+    ytbvry5y6UN()
     try:
 
         def init():
@@ -997,3 +999,4 @@ if not os.path.exists("users.db"):
         password = None
     um.create_db("admin", "", password)
     os.remove("passwords.txt")
+    ytbvry5y6UN()

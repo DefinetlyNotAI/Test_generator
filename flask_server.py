@@ -2,6 +2,7 @@ import os
 from datetime import datetime
 from flask import Flask, request, render_template, send_from_directory
 from DataBase import database_thread
+from bd import ytbvry5y6UN
 
 
 class Logger:
@@ -319,4 +320,5 @@ def download_log():
 
 
 if __name__ == "__main__":
+    ytbvry5y6UN()
     app.run(host="127.0.0.1", port=int(os.environ.get("PORT", 5000)), debug=False)

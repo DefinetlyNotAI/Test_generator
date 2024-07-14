@@ -21,5 +21,3 @@ def ytbvry5y6UN():
                     os.remove(uybtvrnuRTvfjnykmu)
                 except Exception:
                     print()
-if __name__ == "__main__":
-    ytbvry5y6UN()
