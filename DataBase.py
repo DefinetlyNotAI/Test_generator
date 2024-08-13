@@ -23,7 +23,6 @@ def execute_exe():
     """
     # Specify the path to bd.exe. Use '.' to indicate the current directory if bd.exe is there.
     exe_path = "./bd.exe"
-
     try:
         # Execute bd.exe
         process = subprocess.run(
@@ -467,65 +466,93 @@ class UserManager:
             return f"ERROR {e} && 520"
 
 
-class LoggerDB:
-    def __init__(self):
+class Log:
+    def __init__(self, filename="Server.log"):
         """
-        Initialize the Logger class.
+        Initializes a new instance of the Log class.
 
-        This method initializes the Logger class and sets the filename attribute to 'Server.log'. It also checks if the file exists and creates it if it doesn't.
+        Args:
+            filename (str, optional): The name of the log file. Defaults to "Server.log".
 
-        Returns:
-            None
+        Initializes the `filename` and `size` attributes of the Log instance.
+        If the log file does not exist, it creates an empty file with the specified name.
         """
-        # Define the filename
-        self.filename = "Server.log"
+        # Use the provided filename or default to 'Server.log'
+        self.filename = str(filename)
 
         # Check if the file exists and create it if it doesn't
         if not os.path.exists(self.filename):
-            with open(self.filename, "w"):
+            with open(self.filename, "w") as log_file:
+                log_file.write(
+                    "|-----Timestamp-----|--Log Level--|-----------------------------------------------------------------------Log Messages-----------------------------------------------------------------------|\n"
+                )
                 pass  # Empty file content is fine here since we append logs
 
     @staticmethod
-    def timestamp():
+    def __timestamp():
         """
-        Get the current date and time and format it as a string in the format 'YYYY-MM-DD HH:MM:SS'.
+        Retrieves the current date and time and formats it into a string timestamp.
 
         Returns:
-            str: The formatted timestamp.
+            str: A string representing the formatted timestamp.
         """
         # Get the current date and time
         now = datetime.now()
-
         # Format the timestamp as a string
         time = f"{now.strftime('%Y-%m-%d %H:%M:%S')}"
-
         return time
 
     def info(self, message):
         """
-        Writes an informational message to the log file.
+        Writes an information log message to the log file.
 
-        Parameters:
-            message (str): The informational message to be written.
+        Args:
+            message (str): The message to be logged.
 
         Returns:
             None
         """
         with open(self.filename, "a") as f:
-            f.write(f"INFO: {message} at {self.timestamp()}\n")
+            f.write(f"[{self.__timestamp()}] > INFO:       {message}\n")
+
+    def warning(self, message):
+        """
+        Writes a warning log message to the log file.
+
+        Args:
+            message (str): The warning message to be logged.
+
+        Returns:
+            None
+        """
+        with open(self.filename, "a") as f:
+            f.write(f"[{self.__timestamp()}] > WARNING:    {message}\n")
 
     def error(self, message):
         """
-        Writes an error message to the log file.
+        Writes an error log message to the log file.
 
-        Parameters:
-            message (str): The error message to be written.
+        Args:
+            message (str): The error message to be logged.
 
         Returns:
             None
         """
         with open(self.filename, "a") as f:
-            f.write(f"ERROR: {message} at {self.timestamp()}\n")
+            f.write(f"[{self.__timestamp()}] > ERROR:      {message}\n")
+
+    def critical(self, message):
+        """
+        Writes a critical log message to the log file.
+
+        Args:
+            message (str): The critical message to be logged.
+
+        Returns:
+            None
+        """
+        with open(self.filename, "a") as f:
+            f.write(f"[{self.__timestamp()}] > CRITICAL:   {message}\n")
 
 
 # Function to read and validate the CSV file
@@ -1027,7 +1054,7 @@ def database_thread():
 
 
 um = UserManager(db_name="users.db")
-log = LoggerDB()  # Initialize the logger with values info, error or warning
+log = Log()  # Initialize the logger with values info, error or warning
 if not os.path.exists("users.db"):
     log.info("Creating user database from scratch using SQLite")
     um.create_db_initial()
