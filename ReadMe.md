@@ -219,7 +219,7 @@ API.json file format should be at minimum:
 
 ### RLR API 🔍
 
-Request Log Retrieval
+Request LOG Retrieval
 
 **Returns:-**
 It will also return either one of 2 scenarios, If an error occurs, 
