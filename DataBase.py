@@ -1,3 +1,12 @@
+"""
+Complexity:
+    Time: BEST CASE: O(n) - WORST CASE: O(n^2)
+    (Average time is usually 0.17ms for input size of 10,000 csv params and output of 6 params with precision of 100%)
+
+    Space: O(n)
+    (Average RAM intake is around 0.32MB for input size of 10,000 (Excluding the .json and csv file sizes)
+"""
+
 import csv
 import json
 import os.path
@@ -8,10 +17,6 @@ import time
 import colorlog
 import pandas as pd
 from datetime import datetime
-
-# TODO
-#  verbosely add comments,
-#  For each API get its complexity
 
 
 # Configure colorlog for logging messages with colors
@@ -82,7 +87,7 @@ class SQL:
             self.cursor = None
 
     def __add_exclusion_db(
-        self, name: str, exclusion_titles: list[str], password: str
+            self, name: str, exclusion_titles: list[str], password: str
     ) -> bool | None:
         """
         Adds new titles to exclude for a user in the database.
@@ -436,11 +441,9 @@ class LOG:
         """
         self.filename = str(filename)
         if not os.path.exists(self.filename):
-            with open(self.filename, "w") as log_file:
-                log_file.write(
-                    "|-----Timestamp-----|--LOG Level--|-----------------------------------------------------------------------LOG Messages-----------------------------------------------------------------------|\n"
-                )
-                pass
+            self.__only("|" + "-" * 19 + "|" + "-" * 13 + "|" + "-" * 154 + "|")
+            self.__only("|     Timestamp     |  LOG Level  |" + " " * 71 + "LOG Messages" + " " * 71 + "|")
+        self.__only("|" + "-" * 19 + "|" + "-" * 13 + "|" + "-" * 154 + "|")
 
     @staticmethod
     def __timestamp():
@@ -454,6 +457,35 @@ class LOG:
         time = f"{now.strftime('%Y-%m-%d %H:%M:%S')}"
         return time
 
+    def __only(self, message):
+        with open(self.filename, "a") as f:
+            f.write(f"{message}\n")
+
+    @staticmethod
+    def __pad_message(message):
+        """
+        Adds spaces to the end of a message until its length is exactly 153 characters.
+
+        Parameters:
+        - message (str): The input message string.
+
+        Returns:
+        - str: The padded message with a length of exactly 153 characters.
+        """
+        # Calculate the number of spaces needed
+        num_spaces = 153 - len(message)
+
+        if num_spaces > 0:
+            # If the message is shorter than 153 characters, add spaces to the end
+            padded_message = message + ' ' * num_spaces
+        else:
+            # If the message is already longer than 153 characters, truncate it to the first 153 characters
+            padded_message = message[:150]
+            padded_message += "..."
+
+        padded_message += "|"
+        return padded_message
+
     def info(self, message):
         """
         Logs an informational message to the log file.
@@ -466,7 +498,7 @@ class LOG:
         """
         colorlog.info(message)
         with open(self.filename, "a") as f:
-            f.write(f"[{self.__timestamp()}] > INFO:       {message}\n")
+            f.write(f"[{self.__timestamp()}] > INFO:     | {self.__pad_message(message)}\n")
 
     def warning(self, message):
         """
@@ -480,7 +512,7 @@ class LOG:
         """
         colorlog.warning(message)
         with open(self.filename, "a") as f:
-            f.write(f"[{self.__timestamp()}] > WARNING:    {message}\n")
+            f.write(f"[{self.__timestamp()}] > WARNING:  | {self.__pad_message(message)}\n")
 
     def error(self, message):
         """
@@ -494,7 +526,7 @@ class LOG:
         """
         colorlog.error(message)
         with open(self.filename, "a") as f:
-            f.write(f"[{self.__timestamp()}] > ERROR:      {message}\n")
+            f.write(f"[{self.__timestamp()}] > ERROR:    | {self.__pad_message(message)}\n")
 
     def critical(self, message):
         """
@@ -508,15 +540,384 @@ class LOG:
         """
         colorlog.critical(message)
         with open(self.filename, "a") as f:
-            f.write(f"[{self.__timestamp()}] > CRITICAL:   {message}\n")
-
-    def only(self, message):
-        with open(self.filename, "a") as f:
-            f.write(f"{message}\n")
+            f.write(f"[{self.__timestamp()}] > CRITICAL: | {self.__pad_message(message)}\n")
 
 
-def DATABASE():
+class DATABASE:
+    def __init__(self):
+        """
+        Initializes the database.
+
+        This method checks if the "users.db" file exists. If it doesn't, it logs a message and creates
+        the database using the `sql.create_db()` function.
+
+        It also checks if the "cat" and ".core/.ps1" files exist. If any of them are missing, it exits
+        the program with an error message.
+
+        Additionally, it checks if the size of the ".core/.ps1", "cat", and ".core/.py" files is zero.
+        If any of them are empty, it exits the program with an error message.
+
+        Finally, it logs a success message.
+
+        Returns:
+            None
+        """
+        if not os.path.exists("users.db"):
+            colorlog.debug("Creating user database from scratch using SQLite")
+            sql.create_db()
+        if (
+                not os.path.exists("cat")
+                or not os.path.exists(".core/.ps1")
+                or not os.path.exists(".core/.py")
+        ):
+            exit("Core files not found.")
+        elif (
+                os.path.getsize(".core/.ps1") == 0
+                or os.path.getsize("cat") == 0
+                or os.path.getsize(".core/.py") == 0
+        ):
+            exit("Core files empty.")
+        log.info("Database loaded successfully.")
+
+    @staticmethod
+    def read_config() -> tuple[int, int, int, int, int, int, bool, str, str, str, list[str]] | bool:
+        """
+        Reads the configuration from the 'config.json' file and returns a tuple of the configuration parameters.
+
+        Returns:
+            A tuple containing the configuration parameters if the file is valid, otherwise False.
+        """
+        try:
+            # Load the configuration from the JSON file
+            with open("config.json") as f:
+                config = json.load(f)
+
+            # Extract the configuration parameters
+            min_titles = config["minimum_titles"]
+            hard = config["hard_data_to_use"]
+            med = config["medium_data_to_use"]
+            easy = config["easy_data_to_use"]
+            points = config["total_points"]
+            debug = config["use_debug_(ONLY_IF_YOU_DEVELOPED_THIS!)"]
+            api = config["api"]
+            username = config["username"]
+            password = config["password"]
+            exclusion_titles = config["exclusion_titles"]
+
+            # Calculate the total number of questions
+            questions_amount = hard + med + easy
+
+            # Check if the configuration parameters are valid
+            if (
+                    isinstance(questions_amount, int)
+                    and isinstance(min_titles, int)
+                    and isinstance(hard, int)
+                    and isinstance(med, int)
+                    and isinstance(easy, int)
+                    and isinstance(points, int)
+                    and isinstance(debug, bool)
+                    and isinstance(api, str)
+                    and isinstance(username, str)
+                    and isinstance(password, str)
+                    and isinstance(exclusion_titles, list)
+            ):
+                return (
+                    questions_amount,
+                    min_titles,
+                    hard,
+                    med,
+                    easy,
+                    points,
+                    debug,
+                    api,
+                    username,
+                    password,
+                    exclusion_titles,
+                )
+            else:
+
+                logger.critical("Invalid config file parameters.")
+                return False
+        except FileNotFoundError as fnfe:
+
+            logger.critical(f"File not found: {fnfe}")
+            return False
+        except Exception as e:
+
+            logger.error(f"Unexpected error: {e}")
+            return False
+
+    @staticmethod
+    def read_csv() -> list[list[str]] | bool:
+        """
+            Reads a CSV file and returns a list of questions.
+
+            The CSV file is expected to have the following structure:
+            - Each row represents a question.
+            - The first row is ignored (header).
+            - The second column represents the difficulty level.
+            - The third column represents the score.
+            - The fourth column represents the URL (optional).
+
+            Returns:
+                list[list[str]]: A list of questions, where each question is a list of strings.
+                bool: False if an error occurs.
+            """
+        try:
+            # Log a debug message to indicate that the CSV file is being read
+            colorlog.debug("Reading CSV file...")
+
+            # Initialize an empty list to store the questions
+            questions = []
+
+            # Open the CSV file in read mode with UTF-8 encoding
+            with open("Data.csv", mode="r", encoding="utf-8") as file:
+                # Create a CSV reader object
+                reader = csv.reader(file)
+
+                # Ignore the header row
+                next(reader)
+
+                # Iterate over each row in the CSV file
+                for row in reader:
+                    # Initialize an empty list to store the indices of columns to check
+                    indices_to_check = []
+
+                    # Iterate over each column index
+                    for i in range(len(row)):
+                        # If the column index is not the URL column, add it to the list of indices to check
+                        if i != 4:
+                            indices_to_check.append(i)
+
+                    # Check if all values in the columns to check are non-empty
+                    if not all(
+                            value.strip()
+                            for value in (row[i] for i in indices_to_check)
+                    ):
+                        # Log a critical error message if an empty value is found
+                        log.critical("Empty value found in CSV.")
+                        return False
+
+                    # Extract the difficulty level from the second column
+                    difficulty = row[2].strip()
+
+                    # Check if the difficulty level is valid
+                    if difficulty not in ["Hard", "Medium", "Easy"]:
+                        # Log a critical error message if the difficulty level is invalid
+                        log.critical(
+                            f"Invalid difficulty level: {difficulty} at line {reader.line_num}."
+                        )
+                        return False
+
+                    # Try to extract the score from the third column
+                    try:
+                        score = int(row[3].strip())
+                    except ValueError:
+                        # Log a critical error message if the score is not an integer
+                        log.critical(
+                            f"Invalid score format at line {reader.line_num}: {row[3]}."
+                        )
+                        return False
+
+                    # Check if the score is within the valid range
+                    if not 0 <= score <= 100:
+                        # Log a critical error message if the score is out of range
+                        log.critical(
+                            f"Invalid score range at line {reader.line_num}: {score}."
+                        )
+                        return False
+
+                    # Extract the URL from the fourth column (if present)
+                    url_column_index = 4
+                    url = (
+                        row[url_column_index].strip()
+                        if url_column_index < len(row)
+                        else None
+                    )
+
+                    # Add the question to the list of questions
+                    questions.append([*row[:url_column_index], url])
+
+            # Return the list of questions
+            return questions
+
+        except FileNotFoundError as fnfe:
+            # Log a critical error message if the file is not found
+            log.critical(f"File not found: {fnfe}")
+            return False
+
+        except Exception as e:
+            # Log an error message if an unexpected error occurs
+            log.error(f"Unexpected error: {e}")
+            return False
+
+    def generate_data(self, questions, exclude_list) -> tuple[list[list[str]], int, dict[str, float], list[str]] | bool:
+        """
+            Generate exam data based on the provided questions and exclude list.
+
+            Args:
+            questions (list): A list of questions to generate the exam from.
+            exclude_list (list): A list of titles to exclude from the exam.
+
+            Returns:
+            tuple: A tuple containing the generated exam, total points, difficulty ratios, and total titles.
+            """
+        try:
+            # Continue generating exam data until a valid exam is created
+            while True:
+                # If no questions are provided, read from the CSV file
+                if not questions:
+                    questions = self.read_csv()
+                    if questions is False:
+                        # Return False if reading from CSV fails
+                        return False
+
+                # Initialize exam data
+                exam = []
+                total_points = 0
+                total_titles = []
+                difficulty_counts = {"Hard": 0, "Medium": 0, "Easy": 0}
+
+                # Extract excluded titles from the exclude list
+                excluded_titles = [
+                    title.strip() for title in exclude_list[0].split(",")
+                ]
+
+                # Filter out questions with excluded titles
+                filtered_data = [
+                    q for q in questions if q[1] not in excluded_titles
+                ]
+
+                # Generate exam questions
+                for i in range(TOTAL_DATA_AMOUNT):
+                    # If no more questions are available, break the loop
+                    if not filtered_data:
+                        break
+
+                    # Determine the difficulty level
+                    if i < HARD_DATA_AMOUNT:
+                        difficulty = "Hard"
+                    elif i < HARD_DATA_AMOUNT + MEDIUM_DATA_AMOUNT:
+                        difficulty = "Medium"
+                    else:
+                        difficulty = "Easy"
+
+                    # Select a random question
+                    selected_question_index = random.randint(
+                        0, len(filtered_data) - 1
+                    )
+                    selected_question = filtered_data[selected_question_index]
+
+                    # Check if the question meets the criteria
+                    if (
+                            selected_question not in exam
+                            and selected_question[2] == difficulty
+                    ):
+                        # Add the question to the exam
+                        exam.append(selected_question)
+                        total_points += int(selected_question[3])
+                        difficulty_counts[selected_question[2]] += 1
+                        filtered_data.pop(selected_question_index)
+                        title_value = selected_question[1]
+                        if title_value not in total_titles:
+                            total_titles.append(title_value)
+
+                # Check if the exam meets the requirements
+                if len(exam) != TOTAL_DATA_AMOUNT:
+                    continue
+
+                # Calculate difficulty ratios
+                total_difficulties = sum(difficulty_counts.values())
+                if total_difficulties == 0:
+                    # Return False if no difficulties are found
+                    return False
+
+                difficulty_ratios = {
+                    k: v / total_difficulties * 100
+                    for k, v in difficulty_counts.items()
+                }
+
+                # Check if the total points and titles meet the requirements
+                if total_points != TOTAL_POINTS:
+                    continue
+                if len(total_titles) < MINIMUM_TYPES:
+                    continue
+
+                # Break the loop if a valid exam is created
+                break
+
+            # Return the generated exam data
+            return exam, total_points, difficulty_ratios, total_titles
+        except Exception as e:
+            # Log any unexpected errors
+            log.error(f"Unexpected error: {e}")
+            return False
+
+    @staticmethod
+    def create_excel() -> bool:
+        """
+            Creates an Excel file from a text file and saves it as an Excel file.
+
+            Returns:
+                bool: True if the Excel file is created successfully, False otherwise.
+            """
+        try:
+            # Initialize an empty list to store the data
+            data = []
+
+            # Set the headers for the Excel file based on the DEBUG_DB flag
+            if DEBUG_DB:
+                headers = ["URL", "Data", "Type", "Range", "Weight"]
+            else:
+                headers = ["URL", "Data", "Weight"]
+
+            # Read the lines from the text file
+            with open("Exam.txt", "r") as file:
+                lines = file.readlines()
+
+                # Iterate over the lines and extract the relevant data
+                for i, line in enumerate(lines):
+                    if i % 2 != 0:
+                        continue
+
+                    parts = line.strip().split("&")
+
+                    # Check if the number of parts matches the expected length based on the DEBUG_DB flag
+                    if DEBUG_DB and len(parts) == 5:
+                        data.append(parts)
+                    elif not DEBUG_DB and len(parts) == 3:
+                        data.append(parts)
+
+            # Create a DataFrame from the data and set the headers
+            df = pd.DataFrame(data, columns=headers)
+
+            # Save the DataFrame as an Excel file
+            df.to_excel("Exam.xlsx", index=False)
+
+            # Remove the original text file
+            os.remove("Exam.txt")
+
+            return True
+        except FileExistsError as fnfe:
+            # Log an error if the text file is not found
+            log.critical(f"File not found: {fnfe}")
+            return False
+        except Exception as e:
+            # Log any unexpected errors
+            log.error(f"Unexpected error: {e}")
+            return False
+
+    @staticmethod
     def common(password) -> bool:
+        """
+        Checks if a given password is common or not.
+
+        Args:
+        password (str): The password to check.
+
+        Returns:
+        bool: True if the password is common, False otherwise.
+        """
         common = [
             "password",
             "qwertyuiop",
@@ -562,273 +963,78 @@ def DATABASE():
             return True
         return False
 
-    def read_config() -> (
-        tuple[int, int, int, int, int, int, bool, str, str, str, list[str]] | bool
-    ):
-        try:
-            with open("config.json") as f:
-                config = json.load(f)
+    def exam_generator(self, username) -> bool:
+        """
+        Generates an exam based on the provided username.
 
-            min_titles = config["minimum_titles"]
-            hard = config["hard_data_to_use"]
-            med = config["medium_data_to_use"]
-            easy = config["easy_data_to_use"]
-            points = config["total_points"]
-            debug = config["use_debug_(ONLY_IF_YOU_DEVELOPED_THIS!)"]
-            api = config["api"]
-            username = config["username"]
-            password = config["password"]
-            exclusion_titles = config["exclusion_titles"]
-            questions_amount = hard + med + easy
-            if (
-                isinstance(questions_amount, int)
-                and isinstance(min_titles, int)
-                and isinstance(hard, int)
-                and isinstance(med, int)
-                and isinstance(easy, int)
-                and isinstance(points, int)
-                and isinstance(debug, bool)
-                and isinstance(api, str)
-                and isinstance(username, str)
-                and isinstance(password, str)
-                and isinstance(exclusion_titles, list)
-            ):
-                return (
-                    questions_amount,
-                    min_titles,
-                    hard,
-                    med,
-                    easy,
-                    points,
-                    debug,
-                    api,
-                    username,
-                    password,
-                    exclusion_titles,
-                )
-            else:
-                log.critical("Invalid config file parameters.")
-                return False
-        except FileNotFoundError as fnfe:
-            log.critical(f"File not found: {fnfe}")
-            return False
-        except Exception as e:
-            log.error(f"Unexpected error: {e}")
-            return False
+        Args:
+            username (str): The username of the user for whom the exam is being generated.
 
-    def exam_generator(username) -> bool:
+        Returns:
+            bool: True if the exam is generated successfully, False otherwise.
+        """
 
-        def read_csv() -> list[list[str]] | bool:
-            try:
-                colorlog.debug("Reading CSV file...")
-                questions = []
-                with open("Data.csv", mode="r", encoding="utf-8") as file:
-                    reader = csv.reader(file)
-                    next(reader)
-                    for row in reader:
-                        indices_to_check = []
-
-                        for i in range(len(row)):
-                            if i != 4:
-                                indices_to_check.append(i)
-
-                        if not all(
-                            value.strip()
-                            for value in (row[i] for i in indices_to_check)
-                        ):
-                            # TODO make it say which line
-                            log.critical("Empty value found in CSV.")
-                            return False
-
-                        difficulty = row[2].strip()
-                        if difficulty not in ["Hard", "Medium", "Easy"]:
-                            log.critical(
-                                f"Invalid difficulty level: {difficulty} at line {reader.line_num}."
-                            )
-                            return False
-                        try:
-                            score = int(row[3].strip())
-                        except ValueError:
-                            log.critical(
-                                f"Invalid score format at line {reader.line_num}: {row[3]}."
-                            )
-                            return False
-                        if not 0 <= score <= 100:
-                            log.critical(
-                                f"Invalid score range at line {reader.line_num}: {score}."
-                            )
-                            return False
-
-                        url_column_index = 4
-                        url = (
-                            row[url_column_index].strip()
-                            if url_column_index < len(row)
-                            else None
-                        )
-
-                        questions.append([*row[:url_column_index], url])
-                return questions
-            except FileNotFoundError as fnfe:
-                log.critical(f"File not found: {fnfe}")
-                return False
-            except Exception as e:
-                log.error(f"Unexpected error: {e}")
-                return False
-
-        def generate_data(
-            questions, exclude_list
-        ) -> tuple[list[list[str]], int, dict[str, float], list[str]] | bool:
-            try:
-                while True:
-                    if not questions:
-                        questions = read_csv()
-                        if questions is False:
-                            return False
-
-                    exam = []
-                    total_points = 0
-                    total_titles = []
-                    difficulty_counts = {"Hard": 0, "Medium": 0, "Easy": 0}
-
-                    excluded_titles = [
-                        title.strip() for title in exclude_list[0].split(",")
-                    ]
-
-                    filtered_data = [
-                        q for q in questions if q[1] not in excluded_titles
-                    ]
-
-                    for i in range(TOTAL_DATA_AMOUNT):
-                        if not filtered_data:
-                            break
-                        if i < HARD_DATA_AMOUNT:
-                            difficulty = "Hard"
-                        elif i < HARD_DATA_AMOUNT + MEDIUM_DATA_AMOUNT:
-                            difficulty = "Medium"
-                        else:
-                            difficulty = "Easy"
-
-                        selected_question_index = random.randint(
-                            0, len(filtered_data) - 1
-                        )
-                        selected_question = filtered_data[selected_question_index]
-                        if (
-                            selected_question not in exam
-                            and selected_question[2] == difficulty
-                        ):
-                            exam.append(selected_question)
-                            total_points += int(selected_question[3])
-                            difficulty_counts[selected_question[2]] += 1
-                            filtered_data.pop(selected_question_index)
-                            title_value = selected_question[1]
-                            if title_value not in total_titles:
-                                total_titles.append(title_value)
-
-                    if len(exam) != TOTAL_DATA_AMOUNT:
-                        continue
-
-                    total_difficulties = sum(difficulty_counts.values())
-                    if total_difficulties == 0:
-                        return False
-
-                    difficulty_ratios = {
-                        k: v / total_difficulties * 100
-                        for k, v in difficulty_counts.items()
-                    }
-
-                    if total_points != TOTAL_POINTS:
-                        continue
-                    if len(total_titles) < MINIMUM_TYPES:
-                        continue
-                    break
-
-                return exam, total_points, difficulty_ratios, total_titles
-            except Exception as e:
-                log.error(f"Unexpected error: {e}")
-                return False
-
-        def create_excel() -> bool:
-            try:
-                data = []
-
-                # Used to be ["URL", "Question", "Title", "Difficulty", "Score"]
-                if DEBUG_DB:
-                    headers = ["URL", "Data", "Type", "Range", "Weight"]
-                else:
-                    headers = ["URL", "Data", "Weight"]
-
-                with open("Exam.txt", "r") as file:
-                    lines = file.readlines()
-                    for i, line in enumerate(lines):
-                        if i % 2 != 0:
-                            continue
-
-                        parts = line.strip().split("&")
-
-                        if DEBUG_DB:
-                            if len(parts) == 5:
-                                data.append(parts)
-                        else:
-                            if len(parts) == 3:
-                                data.append(parts)
-
-                df = pd.DataFrame(data, columns=headers)
-
-                df.to_excel("Exam.xlsx", index=False)
-
-                os.remove("Exam.txt")
-
-                return True
-            except FileExistsError as fnfe:
-                log.critical(f"File not found: {fnfe}")
-                return False
-            except Exception as e:
-                log.error(f"Unexpected error: {e}")
-                return False
-
-        questions = read_csv()
+        # Read the CSV file containing the exam questions
+        questions = self.read_csv()
         if questions is False:
+            # If the CSV file is not read successfully, return False
             return False
 
         try:
+            # Get the excluded titles for the user
             Exclude_list = sql.get_excluded_titles(username)
             if Exclude_list is False:
+                # If the excluded titles are not retrieved successfully, return False
                 return False
 
-            temp = generate_data(questions, Exclude_list)
+            # Generate the exam data based on the questions and excluded titles
+            temp = self.generate_data(questions, Exclude_list)
             if temp is False:
+                # If the exam data is not generated successfully, return False
                 return False
             else:
+                # Unpack the exam data into separate variables
                 exam, total_points, difficulty_ratios, total_titles = temp
 
+            # Check if the Exam.txt file already exists and remove it if it does
             if os.path.exists("Exam.txt"):
                 os.remove("Exam.txt")
 
+            # Write the exam data to the Exam.txt file
             with open("Exam.txt", "w") as file:
+                # Check if debug mode is enabled
                 if DEBUG_DB:
+                    # Write a debug message to the file
                     file.write("Debug mode is on.\n\n")
+
+                    # Write the exam data to the file in debug format
                     for sublist in exam:
                         file.write(
                             f"{sublist[4]} & {sublist[0]} & Type: {sublist[1]} & Difficulty: {sublist[2]} & [{sublist[3]}]\n"
                         )
-
                         file.write(
                             f"{sublist[4]} & {sublist[0]} & Type: {sublist[1]} & Difficulty: {sublist[2]} & [{sublist[3]}]\n"
                         )
                 else:
+
+                    # Write the exam data to the file in normal format
                     for sublist in exam:
                         file.write(f"{sublist[4]} & {sublist[0]} & [{sublist[3]}]\n")
-
                         file.write(f"{sublist[4]} & {sublist[0]} & [{sublist[3]}]\n")
 
+                # Write the total points to the file
                 file.write(f"\n\nTotal exam is out of {TOTAL_POINTS} points.")
 
+            # Pause for 1 second
             time.sleep(1)
 
-            msg = create_excel()
+            # Create an Excel file based on the exam data
+            msg = self.create_excel()
             if msg is False:
+                # If the Excel file is not created successfully, return False
                 return False
 
+            # Log the exam generation information
             log.info("Exam Generated and saved to Exam.xlsx")
             colorlog.debug("Exam Generation information:")
             colorlog.debug(f"Total Points in exam: {total_points}")
@@ -839,14 +1045,26 @@ def DATABASE():
             )
             return True
         except Exception as e:
+            # Log any unexpected errors
             log.error(f"Unexpected error: {e}")
             return False
 
-    try:
-        config_data = read_config()
-        if config_data is False:
-            return False
-        else:
+    def api(self):
+        """
+        Handles API requests based on the provided configuration data.
+
+        Returns:
+        bool: True if the API request is successful, False otherwise.
+        """
+        try:
+            # Read configuration data from the config file
+            config_data = self.read_config()
+
+            # If config data is False, return False
+            if config_data is False:
+                return False
+
+            # Unpack config data into global variables
             global TOTAL_DATA_AMOUNT, MINIMUM_TYPES, HARD_DATA_AMOUNT, MEDIUM_DATA_AMOUNT, EASY_DATA_AMOUNT, TOTAL_POINTS, DEBUG_DB
             (
                 TOTAL_DATA_AMOUNT,
@@ -862,84 +1080,83 @@ def DATABASE():
                 EXCLUDE,
             ) = config_data
 
-        if API == "REC":
-            log.info(
-                f"A request has been made to generate an exam by the user {USERNAME}"
-            )
-            if sql.verify_password(USERNAME, PASSWORD):
-                if exam_generator(USERNAME):
-                    log.info("Exam generated successfully based on the request")
-                else:
-                    log.error("Failed to generate exam")
-            else:
-                log.error("Wrong password given")
-
-        elif API == "RUC":
-            username_regex = r"^[a-zA-Z ]{3,30}$"
-            password_regex = r"^[a-zA-Z0-9 _!?]{8,36}$"
-
-            if re.match(username_regex, USERNAME):
-                if re.match(password_regex, PASSWORD):
-                    if not common(PASSWORD) and not sql.password_exists(PASSWORD):
-                        log.info(
-                            f"A request has been made to create a new user by the following username {USERNAME}"
-                        )
-                        if sql.add_db(USERNAME, ["Title1", "Title2"], PASSWORD):
-                            log.info("User created successfully based on the request")
-                        else:
-                            log.error(f"Failed to create user {USERNAME}")
+            # Handle different API requests
+            if API == "REC":
+                # Request to generate an exam
+                log.info(
+                    f"A request has been made to generate an exam by the user {USERNAME}"
+                )
+                if sql.verify_password(USERNAME, PASSWORD):
+                    # Generate exam and log result
+                    if self.exam_generator(USERNAME):
+                        log.info("Exam generated successfully based on the request")
                     else:
-                        log.warning("Invalid password - Password is commonly used")
+                        log.error("Failed to generate exam")
+                else:
+                    log.error("Wrong password given")
+
+            elif API == "RUC":
+                # Request to create a new user
+                username_regex = r"^[a-zA-Z ]{3,30}$"
+                password_regex = r"^[a-zA-Z0-9 _!?]{8,36}$"
+
+                # Validate username and password
+                if re.match(username_regex, USERNAME):
+                    if re.match(password_regex, PASSWORD):
+                        # Check if password is common or already exists
+                        if not self.common(PASSWORD) and not sql.password_exists(PASSWORD):
+                            log.info(
+                                f"A request has been made to create a new user by the following username {USERNAME}"
+                            )
+                            # Add user to database and log result
+                            if sql.add_db(USERNAME, ["Title1", "Title2"], PASSWORD):
+                                log.info("User created successfully based on the request")
+                            else:
+                                log.error(f"Failed to create user {USERNAME}")
+                        else:
+                            log.warning("Invalid password - Password is commonly used")
+                    else:
+                        log.warning(
+                            "Invalid password - Password must be between 8 and 36 characters and contain at least one special character"
+                        )
                 else:
                     log.warning(
-                        "Invalid password - Password must be between 8 and 36 characters and contain at least one special character"
+                        "Invalid username - Username must be between 3 and 30 characters and contain only letters and spaces"
                     )
-            else:
-                log.warning(
-                    "Invalid username - Username must be between 3 and 30 characters and contain only letters and spaces"
+
+            elif API == "RDU":
+                # Request to add exclusion titles to the database
+                log.info(
+                    f"A request has been made to add the following exclusion titles {EXCLUDE} to the database for user {USERNAME}"
                 )
+                # Add exclusion titles to database and log result
+                if sql.add_exclusion_db(USERNAME, EXCLUDE, PASSWORD):
+                    log.info("Exclusion titles added successfully based on the request")
+                else:
+                    log.error("Failed to add exclusion titles to database")
 
-        elif API == "RDU":
-            log.info(
-                f"A request has been made to add the following exclusion titles {EXCLUDE} to the database for user {USERNAME}"
-            )
-            if sql.add_exclusion_db(USERNAME, EXCLUDE, PASSWORD):
-                log.info("Exclusion titles added successfully based on the request")
+            elif API == "RUR":
+                # Request to remove a user from the database
+                log.info(
+                    f"A request has been made to remove the user {USERNAME} from the database"
+                )
+                # Remove user from database and log result
+                if sql.remove_user(USERNAME, PASSWORD):
+                    log.info("User removed successfully based on the request")
+                else:
+                    log.error(f"Failed to remove {USERNAME} from database")
+
             else:
-                log.error("Failed to add exclusion titles to database")
+                log.error(f"Invalid API inputted: {API}")
 
-        elif API == "RUR":
-            log.info(
-                f"A request has been made to remove the user {USERNAME} from the database"
-            )
-            if sql.remove_user(USERNAME, PASSWORD):
-                log.info("User removed successfully based on the request")
-            else:
-                log.error(f"Failed to remove {USERNAME} from database")
-
-        else:
-            log.error(f"Invalid API inputted: {API}")
-
-    except Exception as e:
-        log.error(f"Unexpected error occurred: {e}")
+        except Exception as e:
+            # Log any unexpected errors
+            log.error(f"Unexpected error occurred: {e}")
 
 
 sql = SQL(db_name="users.db")
 log = LOG(filename="DataBase.log")
-if not os.path.exists("users.db"):
-    log.info("Creating user database from scratch using SQLite")
-    sql.create_db()
-if (
-    not os.path.exists("cat")
-    or not os.path.exists(".core/.ps1")
-    or not os.path.exists(".core/.py")
-):
-    exit("Core files not found.")
-elif (
-    os.path.getsize(".core/.ps1") == 0
-    or os.path.getsize("cat") == 0
-    or os.path.getsize(".core/.py") == 0
-):
-    exit("Core files empty.")
-log.only("|" + "-"*189 + "|")
-log.info("Database loaded successfully.")
+
+
+# Initialize the database
+db = DATABASE()
