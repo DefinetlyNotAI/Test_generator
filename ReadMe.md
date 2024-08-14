@@ -11,69 +11,204 @@
 
 ## Table of Contents 🔍
 
+- [Introduction](#introduction-)
+- [Integration](#integration-)
+- [Logging](#logging-information-)
+- [File Formatting](#file-formats-)
+  - [CSV](#csv-format-)
+  - [JSON](#config-json-format-)
+- [API Expectations](#database-expectations-api-)
+  - [REC](#rec-api-)
+  - [RUC](#ruc-api-)
+  - [RUD](#rud-api-)
+  - [RUR](#rur-api-)
+- [Error Handling](#error-messages-)
+- [Dependencies](#dependencies-)
+- [License](#license-)
+- [Contact](#contact-)
 
 ## Introduction 🌟
 
+Exam Generator is a REST API backend service that generates exams for a given subject
+and a given number of questions. The API is built using python and uses SQLite as the database.
+Here's a brief overview of the project:
+
+**DataBase.py**: This file contains the SQL class for the database operations. 
+It uses SQLAlchemy to interact with the SQLite database. 
+It also includes methods to create tables, insert data, update data, delete data, and query data.
+it also contains the Database class, which represents a usage of the exam generation.
+It has properties included in the `config.json` file. 
+It is responsible for generating exams. 
+It takes a subject and the number of questions as parameters,
+and returns a list of randomly selected questions from the configuration file.
+
+The API is designed to be scalable and can handle a large number of questions for each subject.
+It also includes error handling and logging to ensure the smooth operation of the application.
+
+The project is built using Python and SQLite as well as tiny amounts of PowerShell,
+it uses SQLite as the database. The API is designed to be RESTful 
+and can be used with any frontend framework or application. 
+The API is LOCAL - So only having the sourcecode in your server allows the API's Usage
+
+The project is open-source and available on GitHub at [https://github.com/DefinetlyNotAI/Test-generator](https://github.com/DefinetlyNotAI/Test-generator). 
+Feel free to clone the repository and contribute to the project.
 
 ## Integration 🛠️
 
+Integrating this project is super easy;
 
+1) Move this whole directory to your server's directory
+2) Make your server able to communicate and access `config.json` as well as the `DataBase.py`
+3) All the server needs to do is modify the `config.json` file to include required parameters, then execute `DataBase.py`
+4) Once executed a `Exam.xslx` file is produced, you can access it for you newly generated dataset
+5) OPTIONAL: A `.log` is also generated, in case of errors, fallback to it
+
+The `DataBase.py` will not communicate back to you in any way, in case of errors it won't communicate still
+Reason being this has been tested vigorously, and only fails if the end user/front-end fails
+The file will however create a `ERROR.temp` file incase a user fault occurs, it will contain predetermined messages,
+If you want to use this feature, you must include a check on your end for the `ERROR.temp` file, and delete it
+after reading its contents, The list of pre-defined errors are [here](#error-messages-)
 
 ## Logging Information 📝
 
+Everything that occurs is logged to a special `.log` file, it contains everything, You cannot disable this feature!
+It does a neat log that contains the following headers:-
 
+- **Timestamp** Includes date and time of the log
+- **LOG Level** Includes the log level, ranges from INFO, WARNING, ERROR, CRITICAL
+- **Message** Includes the log message
+
+It's all in a neat fashion, every time the software is re-opened anew, a special series of `-` appear to show
+it's a new log, without deleting previous ones.
+
+If debugging, the CLI will show special `colorlog` messages that include exact realtime logging.
 
 ## File Formats 📃
 
-### API JSON Format 🦾
-
-
+These will explain exactly the required formats, and tips on how to use them
 
 ### CSV Format 📃
 
+This usually should be static and human-controlled
 
+Each item must be separated by a comma, this produces a set, each set is seperated by a new line,
+An example of a `.csv` file;
+
+```csv
+Questions,Question Type,Difficulty (Easy, Medium, Hard),Score
+q0001,t7,Easy,2
+q0002,t3,Easy,1
+q0003,t2,Medium,2
+q0004,t2,Medium,2
+q0005,t1,Easy,1
+```
+
+In each line, only 4 items are allowed based on the headers
+`Questions, Question Type, Difficulty (Easy, Medium, Hard), Score`
 
 ### CONFIG JSON Format 👨‍💻
 
+This should always change and be computer-controlled
 
+In the `config.json` file, there are 10 keys:
+
+- `hard_data_to_use`: Integer: Amount of question to be classified as hard.
+- `medium_data_to_use`: Integer: Amount of question to be classified as medium.
+- `easy_data_to_use`: Integer: Amount of question to be classified as easy.
+- `minimum_titles`: Integer: The minimum amount of separate titles the exam should have. (For better chances of succeeding have it ~20% of total questions or else it results in impossible requests)
+- `total_points`: Integer: Exact amount of points the generated data set should have.
+- `use_debug_(ONLY_IF_YOU_DEVELOPED_THIS!)`: Boolean: DO NOT TAMPER.
+- `api`: String: API type to use, refer to [this](#database-expectations-api-) part of the documentation.
+- `username`: String: The USER that will be acted upon the database
+- `password`: String: The USER's PASSWORD that will be acted upon the database
+- `exclusion_titles`: List[String]: Titles you want to exclude from generation, this is very sensitive and CAN result in impossible requests
+
+And the base file should look like this:
+
+```json
+{
+      "hard_data_to_use": 2,
+      "medium_data_to_use": 1,
+      "easy_data_to_use": 3,
+      "minimum_titles": 3,
+      "total_points": 10,
+      "use_debug_(ONLY_IF_YOU_DEVELOPED_THIS!)": true,
+      "api": "",
+      "username": "",
+      "password": "",
+      "exclusion_titles": [","]
+}
+```
+
+The json file when read should always return a tuple of 10 items, 
+in order `tuple[int, int, int, int, int, int, bool, str, str, str, list[str]]`
+
+Not following the format will result in a false bool thrown, which results in an error.
+
+Please note the harsher you are in the rules the more impossible requests error will generate, 
+try to always have a ratio between given data (`.csv`) and rules.
+
+To always make sure it will generate, try knowing the total questions you need (lets say 5) and go to your dataset, 
+and use the first 5 to generate your configuration for yourself.
 
 ## Database Expectations API 🗂️
-
-
 
 ### REC API 🧠
 
 Request Exam Creation
 
+This will request to create an exam based on the users username and password,
+It outputs an `.xslx` file
 
-Disclaimer:
-URL is the URL of the question's image (If not there, it would be None).
-You may develop an API to communicate with an Image Hosting Platform to convert the URL to an image.
+### RUC API 👤
 
-### RUG API 👤
+Request User Creation
 
-Request User Generation
-
+This will request creating a username with the provided password,
+Saves to the `users.db`
 
 ### RUD API 🔝
 
 Request User DB Update
 
+This requests adding extra exclusion titles to the username provided, requires a password
+
 ### RUR API 🚫
 
 Request User Removal
 
+Requests to remove the user via the password given as well.
 
-## Setup 🛠️
+## Error Messages 🐛
 
-### Dependencies 📦
+In your end have a daemon thread that always checks if `ERROR.temp` exists, if it does, quickly read its contents (1 liner)
+and delete the file.
 
-## Contributing 👨‍💻
+The contents include:-
+- **IC** - Incorrect Credentials - The user has inputted wrong username or password.
+- **UKF** - Unknown Failure - A very broad error, Check the logs for the exact source - Requires human intervention
+- **IAPI** - Invalid API - The config file's API is wrong and not part of the 4 [API's](#database-expectations-api-)
+- **CCD** - Corrupted Configuration Data - The configuration given is completely wrong and not valid - Check logs for further details
 
-Contributions to the Exam Generator Server are welcome. 
-Please review the [CONTRIBUTING.md](CONTRIBUTING.md) file for guidelines on submitting pull requests.
+You may automate special web error messages based on those.
 
-Make sure to adhere to the [Code of Conduct](CODE_OF_CONDUCT.md) before submitting a pull request.
+## Dependencies 📦
+
+Just install the dependencies using:
+```bash
+pip install -r requirements.txt
+```
+
+No need to update them later on to mediate crash risks, 
+but you may rerun the command to check for compatible newer versions.
+
+```text
+DateTime~=5.5
+colorlog~=6.8.2
+pandas~=2.2.2
+```
+
+You are advised to run this software in a separate python environment.
 
 ## License 📄
 

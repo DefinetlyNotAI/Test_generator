@@ -18,7 +18,6 @@ import colorlog
 import pandas as pd
 from datetime import datetime
 
-
 # Configure colorlog for logging messages with colors
 logger = colorlog.getLogger()
 logger.setLevel(colorlog.INFO)  # Set the log level to INFO to capture all relevant logs
@@ -86,71 +85,63 @@ class SQL:
             # Reset the cursor object to None
             self.cursor = None
 
-    def __add_exclusion_db(
-            self, name: str, exclusion_titles: list[str], password: str
-    ) -> bool | None:
+    def __add_exclusion_db(self, name: str, exclusion_titles: list[str]) -> bool | None:
         """
         Adds new titles to exclude for a user in the database.
 
         Args:
             name (str): The username of the user.
             exclusion_titles (list[str]): The titles to exclude.
-            password (str): The password for the user. If not provided, the function will verify the password using the stored password.
 
         Returns:
             str: A success or error message.
         """
         try:
-            # Verify the password
-            if self.verify_password(name, password):
-                self.__connect()
-                try:
-                    # Execute a SELECT statement to get the existing titles to exclude for the user
+            self.__connect()
+            try:
+                # Execute a SELECT statement to get the existing titles to exclude for the user
+                self.cursor.execute(
+                    """SELECT titles_to_exclude FROM Users WHERE username=?""",
+                    (name,),
+                )
+                result = self.cursor.fetchone()
+
+                # If no result is found or the result is None, set initial_titles to "PLACEHOLDER"
+                if result is None or result[0] is None:
+
+                    initial_titles = "PLACEHOLDER"
+                else:
+                    initial_titles = result[0]
+
+                # Strip the whitespace from the initial_titles
+                current_titles = initial_titles.strip()
+
+                # Convert current_titles and titles to sets for easier set operations
+                current_titles_set = set(current_titles.split(","))
+                titles_set = set(exclusion_titles)
+
+                # Find the new titles to exclude
+                new_titles_set = titles_set - current_titles_set
+
+                # If there are new titles to exclude, update the titles_to_exclude field in the database
+                if new_titles_set:
+
+                    updated_titles = ",".join(list(new_titles_set))
                     self.cursor.execute(
-                        """SELECT titles_to_exclude FROM Users WHERE username=?""",
-                        (name,),
+                        """UPDATE Users SET titles_to_exclude = COALESCE(titles_to_exclude ||?, '') WHERE username =?""",
+                        (updated_titles, name),
                     )
-                    result = self.cursor.fetchone()
-
-                    # If no result is found or the result is None, set initial_titles to "PLACEHOLDER"
-                    if result is None or result[0] is None:
-
-                        initial_titles = "PLACEHOLDER"
-                    else:
-                        initial_titles = result[0]
-
-                    # Strip the whitespace from the initial_titles
-                    current_titles = initial_titles.strip()
-
-                    # Convert current_titles and titles to sets for easier set operations
-                    current_titles_set = set(current_titles.split(","))
-                    titles_set = set(exclusion_titles)
-
-                    # Find the new titles to exclude
-                    new_titles_set = titles_set - current_titles_set
-
-                    # If there are new titles to exclude, update the titles_to_exclude field in the database
-                    if new_titles_set:
-
-                        updated_titles = ",".join(list(new_titles_set))
-                        self.cursor.execute(
-                            """UPDATE Users SET titles_to_exclude = COALESCE(titles_to_exclude ||?, '') WHERE username =?""",
-                            (updated_titles, name),
-                        )
-                        self.conn.commit()
-                        log.info(f"Successfully updated titles for user {name}.")
-                        return True
-                    else:
-                        log.warning(f"No new titles to add for user {name}.")
-                        return False
-
-                except Exception as e:
-                    log.error(
-                        f"An error occurred while adding exclusion titles. as {e}"
-                    )
+                    self.conn.commit()
+                    log.info(f"Successfully updated titles for user {name}.")
+                    return True
+                else:
+                    log.warning(f"No new titles to add for user {name}.")
                     return False
-            else:
-                log.error(f"Password is incorrect for user {name}.")
+
+            except Exception as e:
+                log.error(
+                    f"An error occurred while adding exclusion titles. as {e}"
+                )
                 return False
         except Exception as e:
             log.error(f"An error occurred while adding exclusion titles. as {e}")
@@ -263,7 +254,7 @@ class SQL:
             self.__disconnect()
 
             # Add exclusion titles to the database
-            sql.add_exclusion_db(username, exclusion_titles, password, "CDB")
+            sql.add_exclusion_db(username, exclusion_titles, "CDB")
 
             log.info("Password Successfully Made")
             return True
@@ -272,13 +263,12 @@ class SQL:
             log.error(f"An error occurred while creating the database entry. as {e}")
             return False
 
-    def remove_user(self, username: str, password: str) -> bool:
+    def remove_user(self, username: str) -> bool:
         """
         Removes a user from the database if the provided username and password match.
 
         Args:
             username (str): The username of the user to be removed.
-            password (str): The password of the user to be removed.
 
         Returns:
             bool: A success for true or error for false.
@@ -300,45 +290,39 @@ class SQL:
                 log.warning(f"User does not exist: {username}")
                 return False
 
-            if self.verify_password(username, password):
-                # Connect to the database again
-                self.__connect()
+            # Connect to the database again
+            self.__connect()
 
-                # Delete the user from the database
-                self.cursor.execute("DELETE FROM Users WHERE username=?", (username,))
-                self.conn.commit()
+            # Delete the user from the database
+            self.cursor.execute("DELETE FROM Users WHERE username=?", (username,))
+            self.conn.commit()
 
-                # Disconnect from the database
-                self.__disconnect()
+            # Disconnect from the database
+            self.__disconnect()
 
-                # Return a success message
-                log.info(f"Successfully removed data for {username}")
-                return True
-            else:
-                # Return an error message if the password is incorrect
-                log.error(f"Password is incorrect for {username}")
-                return False
+            # Return a success message
+            log.info(f"Successfully removed data for {username}")
+            return True
         except Exception as e:
             # Return an error message if an exception occurs
             log.error(f"An error occurred while removing the database entry. as {e}")
             return False
 
     @staticmethod
-    def add_exclusion_db(name, exclusion_titles, password, special=None) -> bool:
+    def add_exclusion_db(name, exclusion_titles, special=None) -> bool:
         """
         Adds an exclusion database with the given name, titles, and password.
 
         Args:
             name (str): The name of the exclusion database.
             exclusion_titles (list): A list of titles for the exclusion database.
-            password (str): The password for the exclusion database.
             special (str, optional): A special parameter. Defaults to None.
         """
         colorlog.debug(f"Adding exclusion titles for {name}")
         try:
 
             # Attempt to add the exclusion database
-            value = sql.__add_exclusion_db(name, exclusion_titles, password)
+            value = sql.__add_exclusion_db(name, exclusion_titles)
 
             # Check if the operation was successful
             if value is False:
@@ -347,7 +331,7 @@ class SQL:
             # If special is not provided, add a default value
             if not special:
                 # Add a default value to the exclusion database
-                msg = sql.__add_exclusion_db(name, [","], password)
+                msg = sql.__add_exclusion_db(name, [","])
                 # Check if the operation was successful
                 if msg is False:
                     return False
@@ -580,7 +564,20 @@ class DATABASE:
         log.info("Database loaded successfully.")
 
     @staticmethod
-    def read_config() -> tuple[int, int, int, int, int, int, bool, str, str, str, list[str]] | bool:
+    def __error(error):
+        """
+        Logs an error message to the log file.
+
+        Returns:
+            None
+        """
+        if os.path.exists("ERROR.temp"):
+            os.remove("ERROR.temp")
+        with open("ERROR.temp", "w") as f:
+            f.write(error)
+
+    @staticmethod
+    def __read_config() -> tuple[int, int, int, int, int, int, bool, str, str, str, list[str]] | bool:
         """
         Reads the configuration from the 'config.json' file and returns a tuple of the configuration parameters.
 
@@ -648,7 +645,7 @@ class DATABASE:
             return False
 
     @staticmethod
-    def read_csv() -> list[list[str]] | bool:
+    def __read_csv() -> list[list[str]] | bool:
         """
             Reads a CSV file and returns a list of questions.
 
@@ -751,7 +748,8 @@ class DATABASE:
             log.error(f"Unexpected error: {e}")
             return False
 
-    def generate_data(self, questions, exclude_list) -> tuple[list[list[str]], int, dict[str, float], list[str]] | bool:
+    def __generate_data(self, questions, exclude_list) -> tuple[
+                                                              list[list[str]], int, dict[str, float], list[str]] | bool:
         """
             Generate exam data based on the provided questions and exclude list.
 
@@ -767,7 +765,7 @@ class DATABASE:
             while True:
                 # If no questions are provided, read from the CSV file
                 if not questions:
-                    questions = self.read_csv()
+                    questions = self.__read_csv()
                     if questions is False:
                         # Return False if reading from CSV fails
                         return False
@@ -854,7 +852,7 @@ class DATABASE:
             return False
 
     @staticmethod
-    def create_excel() -> bool:
+    def __create_excel() -> bool:
         """
             Creates an Excel file from a text file and saves it as an Excel file.
 
@@ -908,7 +906,7 @@ class DATABASE:
             return False
 
     @staticmethod
-    def common(password) -> bool:
+    def __common(password) -> bool:
         """
         Checks if a given password is common or not.
 
@@ -963,7 +961,7 @@ class DATABASE:
             return True
         return False
 
-    def exam_generator(self, username) -> bool:
+    def __exam_generator(self, username) -> bool:
         """
         Generates an exam based on the provided username.
 
@@ -975,7 +973,7 @@ class DATABASE:
         """
 
         # Read the CSV file containing the exam questions
-        questions = self.read_csv()
+        questions = self.__read_csv()
         if questions is False:
             # If the CSV file is not read successfully, return False
             return False
@@ -988,7 +986,7 @@ class DATABASE:
                 return False
 
             # Generate the exam data based on the questions and excluded titles
-            temp = self.generate_data(questions, Exclude_list)
+            temp = self.__generate_data(questions, Exclude_list)
             if temp is False:
                 # If the exam data is not generated successfully, return False
                 return False
@@ -1029,7 +1027,7 @@ class DATABASE:
             time.sleep(1)
 
             # Create an Excel file based on the exam data
-            msg = self.create_excel()
+            msg = self.__create_excel()
             if msg is False:
                 # If the Excel file is not created successfully, return False
                 return False
@@ -1058,11 +1056,12 @@ class DATABASE:
         """
         try:
             # Read configuration data from the config file
-            config_data = self.read_config()
+            config_data = self.__read_config()
 
             # If config data is False, return False
             if config_data is False:
-                return False
+                self.__error("CCD")
+                exit("Failed to read config file")
 
             # Unpack config data into global variables
             global TOTAL_DATA_AMOUNT, MINIMUM_TYPES, HARD_DATA_AMOUNT, MEDIUM_DATA_AMOUNT, EASY_DATA_AMOUNT, TOTAL_POINTS, DEBUG_DB
@@ -1088,11 +1087,13 @@ class DATABASE:
                 )
                 if sql.verify_password(USERNAME, PASSWORD):
                     # Generate exam and log result
-                    if self.exam_generator(USERNAME):
+                    if self.__exam_generator(USERNAME):
                         log.info("Exam generated successfully based on the request")
                     else:
                         log.error("Failed to generate exam")
+                        self.__error("UKF")
                 else:
+                    self.__error("IC")
                     log.error("Wrong password given")
 
             elif API == "RUC":
@@ -1104,7 +1105,7 @@ class DATABASE:
                 if re.match(username_regex, USERNAME):
                     if re.match(password_regex, PASSWORD):
                         # Check if password is common or already exists
-                        if not self.common(PASSWORD) and not sql.password_exists(PASSWORD):
+                        if not self.__common(PASSWORD) and not sql.password_exists(PASSWORD):
                             log.info(
                                 f"A request has been made to create a new user by the following username {USERNAME}"
                             )
@@ -1125,38 +1126,50 @@ class DATABASE:
                     )
 
             elif API == "RDU":
-                # Request to add exclusion titles to the database
-                log.info(
-                    f"A request has been made to add the following exclusion titles {EXCLUDE} to the database for user {USERNAME}"
-                )
-                # Add exclusion titles to database and log result
-                if sql.add_exclusion_db(USERNAME, EXCLUDE, PASSWORD):
-                    log.info("Exclusion titles added successfully based on the request")
+                if sql.verify_password(USERNAME, PASSWORD):
+                    # Request to add exclusion titles to the database
+                    log.info(
+                        f"A request has been made to add the following exclusion titles {EXCLUDE} to the database for user {USERNAME}"
+                    )
+                    # Add exclusion titles to database and log result
+                    if sql.add_exclusion_db(USERNAME, EXCLUDE):
+                        log.info("Exclusion titles added successfully based on the request")
+                    else:
+                        log.error("Failed to add exclusion titles to database")
+                        self.__error("UKF")
                 else:
-                    log.error("Failed to add exclusion titles to database")
+                    self.__error("IC")
+                    log.error("Wrong password given")
 
             elif API == "RUR":
-                # Request to remove a user from the database
-                log.info(
-                    f"A request has been made to remove the user {USERNAME} from the database"
-                )
-                # Remove user from database and log result
-                if sql.remove_user(USERNAME, PASSWORD):
-                    log.info("User removed successfully based on the request")
+                if sql.verify_password(USERNAME, PASSWORD):
+                    # Request to remove a user from the database
+                    log.info(
+                        f"A request has been made to remove the user {USERNAME} from the database"
+                    )
+                    # Remove user from database and log result
+                    if sql.remove_user(USERNAME):
+                        log.info("User removed successfully based on the request")
+                    else:
+                        log.error(f"Failed to remove {USERNAME} from database")
+                        self.__error("UKF")
                 else:
-                    log.error(f"Failed to remove {USERNAME} from database")
+                    self.__error("IC")
+                    log.error("Wrong password given")
 
             else:
                 log.error(f"Invalid API inputted: {API}")
+                self.__error("IAPI")
 
         except Exception as e:
             # Log any unexpected errors
             log.error(f"Unexpected error occurred: {e}")
+            self.__error("UKF")
 
 
 sql = SQL(db_name="users.db")
 log = LOG(filename="DataBase.log")
 
-
 # Initialize the database
 db = DATABASE()
+db.api()
