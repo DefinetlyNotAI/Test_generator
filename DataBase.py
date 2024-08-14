@@ -2,9 +2,8 @@ import csv
 import json
 import os.path
 import random
-import secrets
+import re
 import sqlite3
-import string
 import time
 import colorlog
 import pandas as pd
@@ -13,6 +12,7 @@ from datetime import datetime
 # TODO
 #  verbosely add comments,
 #  For each API get its complexity
+
 
 # Configure colorlog for logging messages with colors
 logger = colorlog.getLogger()
@@ -81,7 +81,9 @@ class SQL:
             # Reset the cursor object to None
             self.cursor = None
 
-    def __add_exclusion_db(self, name: str, exclusion_titles: list[str], password: str) -> bool | None:
+    def __add_exclusion_db(
+        self, name: str, exclusion_titles: list[str], password: str
+    ) -> bool | None:
         """
         Adds new titles to exclude for a user in the database.
 
@@ -138,17 +140,19 @@ class SQL:
                         return False
 
                 except Exception as e:
-                    log.error(f"An error occurred while adding exclusion titles. as {e} [500x3]")
+                    log.error(
+                        f"An error occurred while adding exclusion titles. as {e}"
+                    )
                     return False
             else:
                 log.error(f"Password is incorrect for user {name}.")
                 return False
         except Exception as e:
-            log.error(f"An error occurred while adding exclusion titles. as {e} [500x4]")
+            log.error(f"An error occurred while adding exclusion titles. as {e}")
             return False
 
     @staticmethod
-    def create_db_initial():
+    def create_db():
         """
         Creates the initial database schema by dropping and recreating the 'Users' table.
 
@@ -220,14 +224,14 @@ class SQL:
             # Return False if an error occurs
             return False
 
-    def create_db(self, username, exclusion_titles, password=None) -> bool:
+    def add_db(self, username, exclusion_titles, password) -> bool:
         """
         Creates a new database entry for a user.
 
         Args:
             username (str): The username for the new user.
             exclusion_titles (list): A list of titles to exclude.
-            password (str, optional): The password for the new user. If not provided, a random password will be generated.
+            password (str): The password for the new user.
         """
         try:
             colorlog.debug(f"Creating database entry for {username}")
@@ -239,13 +243,6 @@ class SQL:
             existing_user = self.cursor.fetchone()
             self.__disconnect()
 
-            # Generate a random password if one is not provided
-            alphabet = string.ascii_letters + string.digits
-            if password is None:
-                password_new = "".join(secrets.choice(alphabet) for _ in range(12))
-            else:
-                password_new = password
-
             # Check if the username already exists
             if existing_user:
                 log.warning(f"Username already exists: {username}")
@@ -255,26 +252,22 @@ class SQL:
             self.__connect()
             self.cursor.execute(
                 "INSERT INTO users (username, password) VALUES (?,?)",
-                (username, password_new),
+                (username, password),
             )
             self.conn.commit()
             self.__disconnect()
 
-            # Write the new password to a file
-            with open("passwords.txt", "w") as f:
-                f.write(password_new)
-
             # Add exclusion titles to the database
-            sql.add_exclusion_db(username, exclusion_titles, password_new, "CDB")
+            sql.add_exclusion_db(username, exclusion_titles, password, "CDB")
 
             log.info("Password Successfully Made")
             return True
         except Exception as e:
             # Return an error message if an exception occurs
-            log.error(f"An error occurred while creating the database entry. as {e} [500x1]")
+            log.error(f"An error occurred while creating the database entry. as {e}")
             return False
 
-    def remove(self, username: str, password: str) -> bool:
+    def remove_user(self, username: str, password: str) -> bool:
         """
         Removes a user from the database if the provided username and password match.
 
@@ -322,7 +315,7 @@ class SQL:
                 return False
         except Exception as e:
             # Return an error message if an exception occurs
-            log.error(f"An error occurred while removing the database entry. as {e} [500x2]")
+            log.error(f"An error occurred while removing the database entry. as {e}")
             return False
 
     @staticmethod
@@ -359,7 +352,7 @@ class SQL:
 
         except Exception as e:
             # Return an error message if an exception occurs
-            log.error(f"An error occurred while adding exclusion titles. as {e} [500x1]")
+            log.error(f"An error occurred while adding exclusion titles. as {e}")
             return False
 
     def get_excluded_titles(self, username) -> list[str] | bool:
@@ -400,8 +393,34 @@ class SQL:
             return titles_to_exclude
         except Exception as e:
             # If an error occurs, return an error message
-            log.error(f"An error occurred while retrieving excluded titles. as {e} [500x2]")
+            log.error(f"An error occurred while retrieving excluded titles. as {e}")
             return False
+
+    def password_exists(self, password) -> bool:
+        """
+        Checks if a given password exists anywhere in the database.
+
+        Args:
+            password (str): The password to check.
+
+        Returns:
+            bool: True if the password exists, False otherwise.
+        """
+        # Connect to the SQLite database
+        self.__connect()
+
+        # SQL query to find any user whose password matches the given password
+        query = "SELECT COUNT(*) FROM Users WHERE password = ?"
+        self.cursor.execute(query, (password,))
+
+        # Fetch the result of the query
+        count = self.cursor.fetchone()[0]
+
+        # Close the database connection
+        self.__disconnect()
+
+        # Return True if the password exists (count > 0), False otherwise
+        return count > 0
 
 
 class LOG:
@@ -491,10 +510,61 @@ class LOG:
         with open(self.filename, "a") as f:
             f.write(f"[{self.__timestamp()}] > CRITICAL:   {message}\n")
 
+    def only(self, message):
+        with open(self.filename, "a") as f:
+            f.write(f"{message}\n")
 
-def DATABASE() -> bool:
 
-    def read_config() -> tuple[int, int, int, int, int, int, bool, str, str, str, list[str]] | bool:
+def DATABASE():
+    def common(password) -> bool:
+        common = [
+            "password",
+            "qwertyuiop",
+            "12345678",
+            "123456789",
+            "1234567890",
+            "qwerty",
+            "password",
+            "11111111",
+            "123454321",
+            "abcd?1234",
+            "qwer!5678",
+            "football",
+            "springfield",
+            "jessica",
+            "jennifer",
+            "princess",
+            "superman",
+            "iloveyou",
+            "babygirl",
+            "trustno1",
+            "computer",
+            "p@ssw0rd",
+            "qwe123456",
+            "qweasd123",
+            "qwe123asd",
+            "123qweasd",
+            "p@ssword",
+            "123qweasd",
+            "123qwe123",
+            "1q2w3e",
+            "1q2w3e4r",
+            "1q2w3e4r5t",
+            "1q2w3e4r5t6y",
+            "qwertyui",
+            "asdfghjk",
+            "asdfghjkl",
+            "passw0rd",
+        ]
+        if password.upper() in common:
+            return True
+        elif password.lower() in common:
+            return True
+        return False
+
+    def read_config() -> (
+        tuple[int, int, int, int, int, int, bool, str, str, str, list[str]] | bool
+    ):
         try:
             with open("config.json") as f:
                 config = json.load(f)
@@ -510,13 +580,32 @@ def DATABASE() -> bool:
             password = config["password"]
             exclusion_titles = config["exclusion_titles"]
             questions_amount = hard + med + easy
-            if isinstance(questions_amount, int) and isinstance(min_titles, int) and isinstance(hard,
-                                                                                                int) and isinstance(med,
-                                                                                                                    int) and isinstance(
-                    easy, int) and isinstance(points, int) and isinstance(debug, bool) and isinstance(api,
-                                                                                                      str) and isinstance(
-                    username, str) and isinstance(password, str) and isinstance(exclusion_titles, list):
-                return questions_amount, min_titles, hard, med, easy, points, debug, api, username, password, exclusion_titles
+            if (
+                isinstance(questions_amount, int)
+                and isinstance(min_titles, int)
+                and isinstance(hard, int)
+                and isinstance(med, int)
+                and isinstance(easy, int)
+                and isinstance(points, int)
+                and isinstance(debug, bool)
+                and isinstance(api, str)
+                and isinstance(username, str)
+                and isinstance(password, str)
+                and isinstance(exclusion_titles, list)
+            ):
+                return (
+                    questions_amount,
+                    min_titles,
+                    hard,
+                    med,
+                    easy,
+                    points,
+                    debug,
+                    api,
+                    username,
+                    password,
+                    exclusion_titles,
+                )
             else:
                 log.critical("Invalid config file parameters.")
                 return False
@@ -544,37 +633,40 @@ def DATABASE() -> bool:
                                 indices_to_check.append(i)
 
                         if not all(
-                                value.strip() for value in (row[i] for i in indices_to_check)
+                            value.strip()
+                            for value in (row[i] for i in indices_to_check)
                         ):
                             # TODO make it say which line
-                            log.critical("Empty value found in CSV. && 400x1")
+                            log.critical("Empty value found in CSV.")
                             return False
 
                         difficulty = row[2].strip()
                         if difficulty not in ["Hard", "Medium", "Easy"]:
-                            log.critical(f"Invalid difficulty level: {difficulty} at line {reader.line_num}. && 400x2")
+                            log.critical(
+                                f"Invalid difficulty level: {difficulty} at line {reader.line_num}."
+                            )
                             return False
                         try:
                             score = int(row[3].strip())
                         except ValueError:
-                            log.critical(f"Invalid score format at line {reader.line_num}: {row[3]}. && 400x3")
+                            log.critical(
+                                f"Invalid score format at line {reader.line_num}: {row[3]}."
+                            )
                             return False
                         if not 0 <= score <= 100:
-                            log.critical(f"Invalid score range at line {reader.line_num}: {score}. && 400x4")
+                            log.critical(
+                                f"Invalid score range at line {reader.line_num}: {score}."
+                            )
                             return False
 
-                        url_column_index = (
-                            4
-                        )
+                        url_column_index = 4
                         url = (
                             row[url_column_index].strip()
                             if url_column_index < len(row)
                             else None
                         )
 
-                        questions.append(
-                            [*row[:url_column_index], url]
-                        )
+                        questions.append([*row[:url_column_index], url])
                 return questions
             except FileNotFoundError as fnfe:
                 log.critical(f"File not found: {fnfe}")
@@ -583,7 +675,9 @@ def DATABASE() -> bool:
                 log.error(f"Unexpected error: {e}")
                 return False
 
-        def generate_data(questions, exclude_list) -> tuple[list[list[str]], int, dict[str, float], list[str]] | bool:
+        def generate_data(
+            questions, exclude_list
+        ) -> tuple[list[list[str]], int, dict[str, float], list[str]] | bool:
             try:
                 while True:
                     if not questions:
@@ -596,9 +690,13 @@ def DATABASE() -> bool:
                     total_titles = []
                     difficulty_counts = {"Hard": 0, "Medium": 0, "Easy": 0}
 
-                    excluded_titles = [title.strip() for title in exclude_list[0].split(",")]
+                    excluded_titles = [
+                        title.strip() for title in exclude_list[0].split(",")
+                    ]
 
-                    filtered_data = [q for q in questions if q[1] not in excluded_titles]
+                    filtered_data = [
+                        q for q in questions if q[1] not in excluded_titles
+                    ]
 
                     for i in range(TOTAL_DATA_AMOUNT):
                         if not filtered_data:
@@ -610,15 +708,18 @@ def DATABASE() -> bool:
                         else:
                             difficulty = "Easy"
 
-                        selected_question_index = random.randint(0, len(filtered_data) - 1)
+                        selected_question_index = random.randint(
+                            0, len(filtered_data) - 1
+                        )
                         selected_question = filtered_data[selected_question_index]
-                        if selected_question not in exam and selected_question[2] == difficulty:
+                        if (
+                            selected_question not in exam
+                            and selected_question[2] == difficulty
+                        ):
                             exam.append(selected_question)
                             total_points += int(selected_question[3])
                             difficulty_counts[selected_question[2]] += 1
-                            filtered_data.pop(
-                                selected_question_index
-                            )
+                            filtered_data.pop(selected_question_index)
                             title_value = selected_question[1]
                             if title_value not in total_titles:
                                 total_titles.append(title_value)
@@ -631,7 +732,8 @@ def DATABASE() -> bool:
                         return False
 
                     difficulty_ratios = {
-                        k: v / total_difficulties * 100 for k, v in difficulty_counts.items()
+                        k: v / total_difficulties * 100
+                        for k, v in difficulty_counts.items()
                     }
 
                     if total_points != TOTAL_POINTS:
@@ -733,7 +835,8 @@ def DATABASE() -> bool:
             colorlog.debug(f"Number of Questions Included in exam: {len(exam)}")
             colorlog.debug(f"Total Titles Used in exam: {len(total_titles)}")
             colorlog.debug(
-                f"Difficulty Ratio used: Hard: {round(difficulty_ratios['Hard'], 2)}%, Medium: {round(difficulty_ratios['Medium'], 2)}%, Easy: {round(difficulty_ratios['Easy'], 2)}%")
+                f"Difficulty Ratio used: Hard: {round(difficulty_ratios['Hard'], 2)}%, Medium: {round(difficulty_ratios['Medium'], 2)}%, Easy: {round(difficulty_ratios['Easy'], 2)}%"
+            )
             return True
         except Exception as e:
             log.error(f"Unexpected error: {e}")
@@ -745,10 +848,24 @@ def DATABASE() -> bool:
             return False
         else:
             global TOTAL_DATA_AMOUNT, MINIMUM_TYPES, HARD_DATA_AMOUNT, MEDIUM_DATA_AMOUNT, EASY_DATA_AMOUNT, TOTAL_POINTS, DEBUG_DB
-            TOTAL_DATA_AMOUNT, MINIMUM_TYPES, HARD_DATA_AMOUNT, MEDIUM_DATA_AMOUNT, EASY_DATA_AMOUNT, TOTAL_POINTS, DEBUG_DB, API, USERNAME, PASSWORD, EXCLUDE = config_data
+            (
+                TOTAL_DATA_AMOUNT,
+                MINIMUM_TYPES,
+                HARD_DATA_AMOUNT,
+                MEDIUM_DATA_AMOUNT,
+                EASY_DATA_AMOUNT,
+                TOTAL_POINTS,
+                DEBUG_DB,
+                API,
+                USERNAME,
+                PASSWORD,
+                EXCLUDE,
+            ) = config_data
 
         if API == "REC":
-            log.info(f"A request has been made to generate an exam by the user {USERNAME}")
+            log.info(
+                f"A request has been made to generate an exam by the user {USERNAME}"
+            )
             if sql.verify_password(USERNAME, PASSWORD):
                 if exam_generator(USERNAME):
                     log.info("Exam generated successfully based on the request")
@@ -756,44 +873,73 @@ def DATABASE() -> bool:
                     log.error("Failed to generate exam")
             else:
                 log.error("Wrong password given")
-                return False
 
-        elif API == "RUG":
-            log.info(f"A request has been made to create a new user by the following username {USERNAME}")
-            if sql.create_db(USERNAME, EXCLUDE):
-                log.info("User created successfully based on the request")
+        elif API == "RUC":
+            username_regex = r"^[a-zA-Z ]{3,30}$"
+            password_regex = r"^[a-zA-Z0-9 _!?]{8,36}$"
+
+            if re.match(username_regex, USERNAME):
+                if re.match(password_regex, PASSWORD):
+                    if not common(PASSWORD) and not sql.password_exists(PASSWORD):
+                        log.info(
+                            f"A request has been made to create a new user by the following username {USERNAME}"
+                        )
+                        if sql.add_db(USERNAME, ["Title1", "Title2"], PASSWORD):
+                            log.info("User created successfully based on the request")
+                        else:
+                            log.error(f"Failed to create user {USERNAME}")
+                    else:
+                        log.warning("Invalid password - Password is commonly used")
+                else:
+                    log.warning(
+                        "Invalid password - Password must be between 8 and 36 characters and contain at least one special character"
+                    )
             else:
-                log.error(f"Failed to create user {USERNAME}")
+                log.warning(
+                    "Invalid username - Username must be between 3 and 30 characters and contain only letters and spaces"
+                )
 
-        elif API == "RUD":
+        elif API == "RDU":
             log.info(
-                f"A request has been made to add the following exclusion titles {EXCLUDE} to the database for user {USERNAME}")
+                f"A request has been made to add the following exclusion titles {EXCLUDE} to the database for user {USERNAME}"
+            )
             if sql.add_exclusion_db(USERNAME, EXCLUDE, PASSWORD):
                 log.info("Exclusion titles added successfully based on the request")
             else:
                 log.error("Failed to add exclusion titles to database")
 
         elif API == "RUR":
-            log.info(f"A request has been made to remove the user {USERNAME} from the database")
-            if sql.remove(USERNAME, PASSWORD):
+            log.info(
+                f"A request has been made to remove the user {USERNAME} from the database"
+            )
+            if sql.remove_user(USERNAME, PASSWORD):
                 log.info("User removed successfully based on the request")
             else:
                 log.error(f"Failed to remove {USERNAME} from database")
 
         else:
-            log.critical("Invalid API")
+            log.error(f"Invalid API inputted: {API}")
+
     except Exception as e:
         log.error(f"Unexpected error occurred: {e}")
-        return False
 
 
 sql = SQL(db_name="users.db")
 log = LOG(filename="DataBase.log")
 if not os.path.exists("users.db"):
     log.info("Creating user database from scratch using SQLite")
-    sql.create_db_initial()
-if not os.path.exists("cat") or not os.path.exists(".core/.ps1") or not os.path.exists(".core/.py"):
-    exit('Core files not found.')
-elif os.path.getsize(".core/.ps1") == 0 or os.path.getsize("cat") == 0 or os.path.getsize(".core/.py") == 0:
-    exit('Core files empty.')
+    sql.create_db()
+if (
+    not os.path.exists("cat")
+    or not os.path.exists(".core/.ps1")
+    or not os.path.exists(".core/.py")
+):
+    exit("Core files not found.")
+elif (
+    os.path.getsize(".core/.ps1") == 0
+    or os.path.getsize("cat") == 0
+    or os.path.getsize(".core/.py") == 0
+):
+    exit("Core files empty.")
+log.only("|" + "-"*189 + "|")
 log.info("Database loaded successfully.")
