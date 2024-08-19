@@ -1,10 +1,11 @@
 """
 Complexity:
-    Time: BEST CASE: O(n) - WORST CASE: O(n^2)
-    (Average time is usually 0.17ms for input size of 10,000 csv params and output of 6 params with precision of 100%)
+    Time: BEST CASE: O(n+1) - WORST CASE: O(n^2)
+        (Average time is usually 0.17ms for input size of 10,000 csv params and output of 6 params with precision of 100%)
+        (Automatically 1 second is added to the time to make sure the sync is on (using `time.sleep`))
 
     Space: O(n)
-    (Average RAM intake is around 0.32MB for input size of 10,000 (Excluding the .json and csv file sizes)
+        (Average RAM intake is around 0.32MB for input size of 10,000 (Excluding the .json and csv file sizes)
 """
 
 import csv
