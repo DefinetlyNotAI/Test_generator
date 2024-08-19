@@ -20,12 +20,12 @@ from datetime import datetime
 
 
 class SQL:
-    def __init__(self, db_name="users.db"):
+    def __init__(self, db_name="Users.db"):
         """
         Initializes the SQL class.
 
         Args:
-            db_name (str, optional): The name of the database. Defaults to "users.db".
+            db_name (str, optional): The name of the database. Defaults to "Users.db".
         """
         # Set the database name
         self.db_name = db_name
@@ -125,8 +125,7 @@ class SQL:
             log.error(f"An error occurred while adding exclusion titles. as {e}")
             return False
 
-    @staticmethod
-    def create_db():
+    def create_db(self):
         """
         Creates the initial database schema by dropping and recreating the 'Users' table.
 
@@ -135,7 +134,7 @@ class SQL:
         """
         colorlog.debug("Creating initial database schema...")
         # Establish a connection to the SQLite database
-        conn = sqlite3.connect("users.db")
+        conn = sqlite3.connect(self.db_name)
         # Create a cursor object for the connection
         cursor = conn.cursor()
 
@@ -595,7 +594,7 @@ class DATABASE:
         """
         Initializes the database.
 
-        This method checks if the "users.db" file exists. If it doesn't, it logs a message and creates
+        This method checks if the database file exists. If it doesn't, it logs a message and creates
         the database using the `sql.create_db()` function.
 
         It also checks if the "cat" and ".core/.ps1" files exist. If any of them are missing, it exits
@@ -609,7 +608,7 @@ class DATABASE:
         Returns:
             None
         """
-        if not os.path.exists("users.db"):
+        if not os.path.exists(db_name):
             colorlog.debug("Creating user database from scratch using SQLite")
             sql.create_db()
         if (
@@ -1227,7 +1226,8 @@ class DATABASE:
             self.__error("UKF")
 
 
-sql = SQL(db_name="users.db")
+db_name = "Users.db"
+sql = SQL(db_name=db_name)
 log = LOG(filename="DataBase.log")
 
 # Initialize the database
