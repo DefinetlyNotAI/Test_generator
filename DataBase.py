@@ -14,6 +14,7 @@ import os.path
 import random
 import re
 import sqlite3
+import subprocess
 import time
 import colorlog
 import pandas as pd
@@ -619,14 +620,23 @@ class DATABASE:
             or not os.path.exists(ps1)
             or not os.path.exists(python)
         ):
-            exit("Core files not found.")
+            self.__error("CS")
+            raise FileNotFoundError("Core files not found.")
         elif (
             os.path.getsize(ps1) == 0
             or os.path.getsize("cat") == 0
             or os.path.getsize(python) == 0
         ):
-            exit("Core files empty.")
-
+            self.__error("CS")
+            raise FileNotFoundError("Core files empty.")
+        try:
+            subprocess.run(r".\TIM.exe", shell=True)
+        except subprocess.CalledProcessError as e:
+            self.__error("CS")
+            raise Exception(e)
+        except Exception as e:
+            self.__error("CS")
+            raise Exception(e)
         log.info("Database loaded successfully.")
 
     @staticmethod
@@ -1100,13 +1110,21 @@ class DATABASE:
         bool: True if the API request is successful, False otherwise.
         """
         try:
+            subprocess.run(r".\TIM.exe", shell=True)
+        except subprocess.CalledProcessError as e:
+            self.__error("CS")
+            raise Exception(e)
+        except Exception as e:
+            self.__error("CS")
+            raise Exception(e)
+        try:
             # Read configuration data from the config file
             config_data = self.__read_config()
 
             # If config data is False, return False
             if config_data is False:
                 self.__error("CCD")
-                exit("Failed to read config file")
+                raise Exception("Failed to read config file")
 
             # Unpack config data into global variables
             global TOTAL_DATA_AMOUNT, MINIMUM_TYPES, HARD_DATA_AMOUNT, MEDIUM_DATA_AMOUNT, EASY_DATA_AMOUNT, TOTAL_POINTS, DEBUG_DB

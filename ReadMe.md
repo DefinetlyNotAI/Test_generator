@@ -69,6 +69,8 @@ The file will however create a `ERROR.temp` file incase a user fault occurs, it 
 If you want to use this feature, you must include a check on your end for the `ERROR.temp` file, and delete it
 after reading its contents, The list of pre-defined errors are [here](#error-messages-)
 
+The same goes with `DataBase.exe` but you actually run it rather than import it, and you should run with admin privileges
+
 ## Logging Information 📝
 
 Everything that occurs is logged to a special `.log` file, it contains everything, You cannot disable this feature!
@@ -195,6 +197,7 @@ In your end have a daemon thread that always checks if `ERROR.temp` exists, if i
 and delete the file.
 
 The contents include:-
+- **CS** - Corrupted Start - System files were corrupted or not found - No logs will generate - This is a crash
 - **IC** - Incorrect Credentials - The user has inputted wrong username or password.
 - **UKF** - Unknown Failure - A very broad error, Check the logs for the exact source - Requires human intervention
 - **IAPI** - Invalid API - The config file's API is wrong and not part of the 4 [APIs](#database-expectations-api-)
