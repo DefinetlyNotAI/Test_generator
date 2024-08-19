@@ -1083,14 +1083,6 @@ class DATABASE:
         bool: True if the API request is successful, False otherwise.
         """
         try:
-            subprocess.run(r".\TIM.exe", shell=True)
-        except subprocess.CalledProcessError as e:
-            self.__error("CS")
-            raise Exception(e)
-        except Exception as e:
-            self.__error("CS")
-            raise Exception(e)
-        try:
             # Read configuration data from the config file
             config_data = self.__read_config()
 
