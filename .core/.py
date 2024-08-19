@@ -4,7 +4,7 @@ import subprocess
 
 
 def check_hash(password):
-    target_hash = "e8dcb3acb471aaeef1da2683624dd983cfe272833c6d5e406151d06cd6229f22"
+    target_hash = "45224d545d5243615294f47d61b05bc46b0bd55ae9939bfb5303e5302386494d"
     encoded_input = password.encode()
     sha256_hash = hashlib.sha256()
     sha256_hash.update(encoded_input)

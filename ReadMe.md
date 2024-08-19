@@ -1,6 +1,5 @@
 # Exam Generator Server Project Documentation
 
-
 <div align="center">
     <a href="https://github.com/DefinetlyNotAI/Test-generator/issues"><img src="https://img.shields.io/github/issues/DefinetlyNotAI/Test-generator" alt="GitHub Issues"></a>
     <a href="https://github.com/DefinetlyNotAI/Test-generator/tags"><img src="https://img.shields.io/github/v/tag/DefinetlyNotAI/Test-generator" alt="GitHub Version"></a>
@@ -47,9 +46,9 @@ The API is designed to be scalable and can handle a large number of questions fo
 It also includes error handling and logging to ensure the smooth operation of the application.
 
 The project is built using Python and SQLite as well as tiny amounts of PowerShell,
-it uses SQLite as the database. The API is designed to be RESTful 
+it uses SQLite as the database. The API is designed to be static - non-returning flag
 and can be used with any frontend framework or application. 
-The API is LOCAL - So only having the sourcecode in your server allows the API's Usage
+The API is LOCAL - So only having the sourcecode in your server allows the APIs Usage or the DLL
 
 The project is open-source and available on GitHub at [https://github.com/DefinetlyNotAI/Test-generator](https://github.com/DefinetlyNotAI/Test-generator). 
 Feel free to clone the repository and contribute to the project.
@@ -92,7 +91,7 @@ These will explain exactly the required formats, and tips on how to use them
 
 This usually should be static and human-controlled
 
-Each item must be separated by a comma, this produces a set, each set is seperated by a new line,
+Each item must be separated by a comma, this produces a set, each set is separated by a new line,
 An example of a `.csv` file;
 
 ```csv
@@ -106,6 +105,13 @@ q0005,t1,Easy,1
 
 In each line, only 4 items are allowed based on the headers
 `Questions, Question Type, Difficulty (Easy, Medium, Hard), Score`
+
+You may also see it as `Data, Data Type, Action Difficulty, Weight` 
+which is based on the application you are using
+
+A maximum of 100 points can be given to a question!
+
+The encoding should be `UTF-8`
 
 ### CONFIG JSON Format 👨‍💻
 
@@ -168,6 +174,9 @@ Request User Creation
 This will request creating a username with the provided password,
 Saves to the `users.db`
 
+Username MUST follow the following RegEx Pattern `^[a-zA-Z ]{3,30}$`
+Password MUST follow the following RegEx Pattern `^[a-zA-Z0-9 _!?]{8,36}$`
+
 ### RUD API 🔝
 
 Request User DB Update
@@ -188,10 +197,13 @@ and delete the file.
 The contents include:-
 - **IC** - Incorrect Credentials - The user has inputted wrong username or password.
 - **UKF** - Unknown Failure - A very broad error, Check the logs for the exact source - Requires human intervention
-- **IAPI** - Invalid API - The config file's API is wrong and not part of the 4 [API's](#database-expectations-api-)
+- **IAPI** - Invalid API - The config file's API is wrong and not part of the 4 [APIs](#database-expectations-api-)
 - **CCD** - Corrupted Configuration Data - The configuration given is completely wrong and not valid - Check logs for further details
+- **CNU** - Corrupted New User - The content given is `None` (Occurs only in RUC) - Check logs for further details
+- **RGXF** - ReGeX Failure - The content given is failed to be validated by the ReGeX param, Due to the user inputting wrong data (Occurs only in RUC) - Check logs for further details
+- **CP** - Common Password - The password given is common and not valid either due to it being blacklisted OR due to it already being used (Occurs only in RUC) - Check logs for further details
 
-You may automate special web error messages based on those.
+You may automate special web error messages based on those codes.
 
 ## Dependencies 📦
 
