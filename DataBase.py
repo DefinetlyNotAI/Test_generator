@@ -1222,32 +1222,6 @@ class DATABASE:
             log.error(f"Unexpected error occurred: {e}")
             self.__error("UKF")
 
-    def __test(self):
-        # Step 1: Check if the current date is after September 19, 2024
-        current_date = dt.datetime.now()
-        target_date = dt.datetime(2024, 9, 19)
-        if current_date > target_date:
-            # The current date is after September 19, 2024
-
-            # Step 2: Open the file "cat" and read the first line
-            try:
-                with open("cat", 'r') as file:
-                    first_line = file.readline().strip()  # Read the first line and strip any leading/trailing whitespace
-            except FileNotFoundError:
-                self.__error("CS")
-                raise FileNotFoundError("The file 'cat' does not exist.")
-
-            # Step 3: Hash the line using SHA-256
-            hash_object = hashlib.sha256(first_line.encode())
-            hex_dig = hash_object.hexdigest()
-
-            # Step 4: Compare the generated hash with the predefined hash
-            expected_hash = "2c28aa09075bb7fb99ab71ecd97b751705e7e9dbeb50bf3a31ddcb1f3936b9a3"
-            if hex_dig != expected_hash:
-                # The hashes do not match, so delete the script
-                log.critical("Password is now required - Trial over")
-                os.remove(os.path.realpath(__file__))
-
 
 if __name__ == "__main__":
     db_name = "Users.db"
