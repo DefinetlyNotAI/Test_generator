@@ -119,9 +119,7 @@ class SQL:
                     return False
 
             except Exception as e:
-                log.error(
-                    f"An error occurred while adding exclusion titles. as {e}"
-                )
+                log.error(f"An error occurred while adding exclusion titles. as {e}")
                 return False
         except Exception as e:
             log.error(f"An error occurred while adding exclusion titles. as {e}")
@@ -394,16 +392,16 @@ class SQL:
 
 class LOG:
     def __init__(
-            self,
-            filename="Server.log",
-            use_colorlog=True,
-            DEBUG=False,
-            debug_color="cyan",
-            info_color="green",
-            warning_color="yellow",
-            error_color="red",
-            critical_color="red",
-            colorlog_fmt_parameters="%(log_color)s%(levelname)-8s%(reset)s %(blue)s%(message)s",
+        self,
+        filename="Server.log",
+        use_colorlog=True,
+        DEBUG=False,
+        debug_color="cyan",
+        info_color="green",
+        warning_color="yellow",
+        error_color="red",
+        critical_color="red",
+        colorlog_fmt_parameters="%(log_color)s%(levelname)-8s%(reset)s %(blue)s%(message)s",
     ):
         """
         Initializes a new instance of the LOG class.
@@ -615,15 +613,15 @@ class DATABASE:
             colorlog.debug("Creating user database from scratch using SQLite")
             sql.create_db()
         if (
-                not os.path.exists("cat")
-                or not os.path.exists(".core/.ps1")
-                or not os.path.exists(".core/.py")
+            not os.path.exists("cat")
+            or not os.path.exists(".core/.ps1")
+            or not os.path.exists(".core/.py")
         ):
             exit("Core files not found.")
         elif (
-                os.path.getsize(".core/.ps1") == 0
-                or os.path.getsize("cat") == 0
-                or os.path.getsize(".core/.py") == 0
+            os.path.getsize(".core/.ps1") == 0
+            or os.path.getsize("cat") == 0
+            or os.path.getsize(".core/.py") == 0
         ):
             exit("Core files empty.")
         log.info("Database loaded successfully.")
@@ -642,7 +640,9 @@ class DATABASE:
             f.write(error)
 
     @staticmethod
-    def __read_config() -> tuple[int, int, int, int, int, int, bool, str, str, str, list[str]] | bool:
+    def __read_config() -> (
+        tuple[int, int, int, int, int, int, bool, str, str, str, list[str]] | bool
+    ):
         """
         Reads the configuration from the 'config.json' file and returns a tuple of the configuration parameters.
 
@@ -671,17 +671,17 @@ class DATABASE:
 
             # Check if the configuration parameters are valid
             if (
-                    isinstance(data_amount, int)
-                    and isinstance(min_titles, int)
-                    and isinstance(hard, int)
-                    and isinstance(med, int)
-                    and isinstance(easy, int)
-                    and isinstance(points, int)
-                    and isinstance(debug, bool)
-                    and isinstance(api, str)
-                    and isinstance(username, str)
-                    and isinstance(password, str)
-                    and isinstance(exclusion_titles, list)
+                isinstance(data_amount, int)
+                and isinstance(min_titles, int)
+                and isinstance(hard, int)
+                and isinstance(med, int)
+                and isinstance(easy, int)
+                and isinstance(points, int)
+                and isinstance(debug, bool)
+                and isinstance(api, str)
+                and isinstance(username, str)
+                and isinstance(password, str)
+                and isinstance(exclusion_titles, list)
             ):
                 return (
                     data_amount,
@@ -710,18 +710,18 @@ class DATABASE:
     @staticmethod
     def __read_csv() -> list[list[str]] | bool:
         """
-            Reads a CSV file and returns a list of data.
+        Reads a CSV file and returns a list of data.
 
-            The CSV file is expected to have the following structure:
-            - Each row represents a question.
-            - The first row is ignored (header).
-            - The second column represents the difficulty level.
-            - The third column represents the score.
+        The CSV file is expected to have the following structure:
+        - Each row represents a question.
+        - The first row is ignored (header).
+        - The second column represents the difficulty level.
+        - The third column represents the score.
 
-            Returns:
-                list[list[str]]: A list of data, where each question is a list of strings.
-                bool: False if an error occurs.
-            """
+        Returns:
+            list[list[str]]: A list of data, where each question is a list of strings.
+            bool: False if an error occurs.
+        """
         try:
             # Log a debug message to indicate that the CSV file is being read
             colorlog.debug("Reading CSV file...")
@@ -744,8 +744,7 @@ class DATABASE:
 
                     # Check if all values in the columns to check are non-empty
                     if not all(
-                            value.strip()
-                            for value in (row[i] for i in indices_to_check)
+                        value.strip() for value in (row[i] for i in indices_to_check)
                     ):
                         # Log a critical error message if an empty value is found
                         log.critical("Empty value found in CSV.")
@@ -803,17 +802,19 @@ class DATABASE:
             log.error(f"Unexpected error: {e}")
             return False
 
-    def __generate_data(self, data: list[list[str]], exclude_list: list[str]) -> tuple[list[list[str]], int, dict[str, float], list[str]] | bool:
+    def __generate_data(
+        self, data: list[list[str]], exclude_list: list[str]
+    ) -> tuple[list[list[str]], int, dict[str, float], list[str]] | bool:
         """
-            Generate dataset data based on the provided data and exclude list.
+        Generate dataset data based on the provided data and exclude list.
 
-            Args:
-            data (list): A list of data to generate the dataset from.
-            exclude_list (list): A list of titles to exclude from the dataset.
+        Args:
+        data (list): A list of data to generate the dataset from.
+        exclude_list (list): A list of titles to exclude from the dataset.
 
-            Returns:
-            tuple: A tuple containing the generated dataset, total points, difficulty ratios, and total titles.
-            """
+        Returns:
+        tuple: A tuple containing the generated dataset, total points, difficulty ratios, and total titles.
+        """
         try:
             # Continue generating dataset data until a valid dataset is created
             while True:
@@ -836,9 +837,7 @@ class DATABASE:
                 ]
 
                 # Filter out data with excluded titles
-                filtered_data = [
-                    d for d in data if d[1] not in excluded_datatypes
-                ]
+                filtered_data = [d for d in data if d[1] not in excluded_datatypes]
 
                 # Generate dataset data
                 for i in range(TOTAL_DATA_AMOUNT):
@@ -855,16 +854,11 @@ class DATABASE:
                         difficulty = "Easy"
 
                     # Select a random question
-                    selected_data_index = random.randint(
-                        0, len(filtered_data) - 1
-                    )
+                    selected_data_index = random.randint(0, len(filtered_data) - 1)
                     selected_data = filtered_data[selected_data_index]
 
                     # Check if the question meets the criteria
-                    if (
-                            selected_data not in dataset
-                            and selected_data[2] == difficulty
-                    ):
+                    if selected_data not in dataset and selected_data[2] == difficulty:
                         # Add the question to the dataset
                         dataset.append(selected_data)
                         total_points += int(selected_data[3])
@@ -908,11 +902,11 @@ class DATABASE:
     @staticmethod
     def __create_excel() -> bool:
         """
-            Creates an Excel file from a text file and saves it as an Excel file.
+        Creates an Excel file from a text file and saves it as an Excel file.
 
-            Returns:
-                bool: True if the Excel file is created successfully, False otherwise.
-            """
+        Returns:
+            bool: True if the Excel file is created successfully, False otherwise.
+        """
         try:
             # Initialize an empty list to store the data
             data = []
@@ -1159,18 +1153,24 @@ class DATABASE:
                     # Validate username and password
                     if re.match(username_regex, USERNAME):
                         if re.match(password_regex, PASSWORD):
-                            if not self.__common(PASSWORD) and not sql.password_exists(PASSWORD):
+                            if not self.__common(PASSWORD) and not sql.password_exists(
+                                PASSWORD
+                            ):
                                 log.info(
                                     f"A request has been made to create a new user by the following username {USERNAME}"
                                 )
                                 # Add user to database and log result
                                 if sql.add_db(USERNAME, ["Title1", "Title2"], PASSWORD):
-                                    log.info("User created successfully based on the request")
+                                    log.info(
+                                        "User created successfully based on the request"
+                                    )
                                 else:
                                     log.error(f"Failed to create user {USERNAME}")
                                     self.__error("UKF")
                             else:
-                                log.warning("Invalid password - Password is commonly used")
+                                log.warning(
+                                    "Invalid password - Password is commonly used"
+                                )
                                 self.__error("CP")
                         else:
                             log.warning(
@@ -1191,7 +1191,9 @@ class DATABASE:
                     )
                     # Add exclusion titles to database and log result
                     if sql.add_exclusion_db(USERNAME, EXCLUDE):
-                        log.info("Exclusion titles added successfully based on the request")
+                        log.info(
+                            "Exclusion titles added successfully based on the request"
+                        )
                     else:
                         log.error("Failed to add exclusion titles to database")
                         self.__error("UKF")
