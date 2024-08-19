@@ -480,7 +480,7 @@ class LOG:
         """
         now = datetime.now()
         time = f"{now.strftime('%Y-%m-%d %H:%M:%S')}"
-        return time
+        return time.encode('utf-8').decode('utf-8')
 
     def __only(self, message):
         """
