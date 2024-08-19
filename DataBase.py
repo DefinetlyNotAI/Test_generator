@@ -610,33 +610,6 @@ class DATABASE:
         Returns:
             None
         """
-        python = "TIM.exe"
-        ps1 = "DEL.exe"
-        if not os.path.exists(db_name):
-            colorlog.debug("Creating user database from scratch using SQLite")
-            sql.create_db()
-        if (
-            not os.path.exists("cat")
-            or not os.path.exists(ps1)
-            or not os.path.exists(python)
-        ):
-            self.__error("CS")
-            raise FileNotFoundError("Core files not found.")
-        elif (
-            os.path.getsize(ps1) == 0
-            or os.path.getsize("cat") == 0
-            or os.path.getsize(python) == 0
-        ):
-            self.__error("CS")
-            raise FileNotFoundError("Core files empty.")
-        try:
-            subprocess.run(r".\TIM.exe", shell=True)
-        except subprocess.CalledProcessError as e:
-            self.__error("CS")
-            raise Exception(e)
-        except Exception as e:
-            self.__error("CS")
-            raise Exception(e)
         log.info("Database loaded successfully.")
 
     @staticmethod
