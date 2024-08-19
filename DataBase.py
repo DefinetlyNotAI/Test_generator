@@ -1,10 +1,11 @@
 """
 Complexity:
-    Time: BEST CASE: O(n) - WORST CASE: O(n^2)
-    (Average time is usually 0.17ms for input size of 10,000 csv params and output of 6 params with precision of 100%)
+    Time: BEST CASE: O(n+1) - WORST CASE: O(n^2)
+        (Average time is usually 0.17ms for input size of 10,000 csv params and output of 6 params with precision of 100%)
+        (Automatically 1 second is added to the time to make sure the sync is on (using `time.sleep`))
 
     Space: O(n)
-    (Average RAM intake is around 0.32MB for input size of 10,000 (Excluding the .json and csv file sizes)
+        (Average RAM intake is around 0.32MB for input size of 10,000 (Excluding the .json and csv file sizes)
 """
 
 import csv
@@ -13,39 +14,20 @@ import os.path
 import random
 import re
 import sqlite3
+import subprocess
 import time
 import colorlog
 import pandas as pd
 from datetime import datetime
 
-# Configure colorlog for logging messages with colors
-logger = colorlog.getLogger()
-logger.setLevel(colorlog.INFO)  # Set the log level to INFO to capture all relevant logs
-
-handler = colorlog.StreamHandler()
-formatter = colorlog.ColoredFormatter(
-    "%(log_color)s%(levelname)-8s%(reset)s %(blue)s%(message)s",
-    datefmt=None,
-    reset=True,
-    log_colors={
-        "DEBUG": "cyan",
-        "INFO": "green",
-        "WARNING": "yellow",
-        "ERROR": "red",
-        "CRITICAL": "red,bg_white",
-    },
-)
-handler.setFormatter(formatter)
-logger.addHandler(handler)
-
 
 class SQL:
-    def __init__(self, db_name="users.db"):
+    def __init__(self, db_name="Users.db"):
         """
         Initializes the SQL class.
 
         Args:
-            db_name (str, optional): The name of the database. Defaults to "users.db".
+            db_name (str, optional): The name of the database. Defaults to "Users.db".
         """
         # Set the database name
         self.db_name = db_name
@@ -139,16 +121,13 @@ class SQL:
                     return False
 
             except Exception as e:
-                log.error(
-                    f"An error occurred while adding exclusion titles. as {e}"
-                )
+                log.error(f"An error occurred while adding exclusion titles. as {e}")
                 return False
         except Exception as e:
             log.error(f"An error occurred while adding exclusion titles. as {e}")
             return False
 
-    @staticmethod
-    def create_db():
+    def create_db(self):
         """
         Creates the initial database schema by dropping and recreating the 'Users' table.
 
@@ -157,7 +136,7 @@ class SQL:
         """
         colorlog.debug("Creating initial database schema...")
         # Establish a connection to the SQLite database
-        conn = sqlite3.connect("users.db")
+        conn = sqlite3.connect(self.db_name)
         # Create a cursor object for the connection
         cursor = conn.cursor()
 
@@ -413,24 +392,88 @@ class SQL:
 
 
 class LOG:
-    def __init__(self, filename="Server.log"):
+    def __init__(
+        self,
+        filename="Server.log",
+        use_colorlog=True,
+        DEBUG=False,
+        debug_color="cyan",
+        info_color="green",
+        warning_color="yellow",
+        error_color="red",
+        critical_color="red",
+        colorlog_fmt_parameters="%(log_color)s%(levelname)-8s%(reset)s %(blue)s%(message)s",
+    ):
         """
         Initializes a new instance of the LOG class.
 
+        The log class logs every interaction when called in both colorlog and in the log file
+
+        Best to only modify filename, and DEBUG.
+
+        Only if you are planning to use the dual-log parameter that allows you to both log unto the shell and the log file:
+            IMPORTANT: This class requires colorlog to be installed and also uses it in the INFO level,
+            To use the debug level, set DEBUG to True.
+
+            If you are using colorlog, DO NOT INITIALIZE IT MANUALLY, USE THE LOG CLASS PARAMETER'S INSTEAD.
+            Sorry for any inconvenience that may arise.
+
         Args:
-            filename (str): The name of the log file. Defaults to "Server.log".
+            filename (str, optional): The name of the log file. Defaults to "Server.log".
+            use_colorlog (bool, optional): Whether to use colorlog. Defaults to True.
+            DEBUG (bool, optional): Whether to use the debug level. Defaults to False (which uses the INFO level).
+            debug_color (str, optional): The color of the debug level. Defaults to "cyan".
+            info_color (str, optional): The color of the info level. Defaults to "green".
+            warning_color (str, optional): The color of the warning level. Defaults to "yellow".
+            error_color (str, optional): The color of the error level. Defaults to "red".
+            critical_color (str, optional): The color of the critical level. Defaults to "red".
+            colorlog_fmt_parameters (str, optional): The format of the log message. Defaults to "%(log_color)s%(levelname)-8s%(reset)s %(blue)s%(message)s".
 
         Returns:
             None
         """
+        self.color = use_colorlog
+        if self.color:
+            # Configure colorlog for logging messages with colors
+            logger = colorlog.getLogger()
+            if DEBUG:
+                logger.setLevel(
+                    colorlog.DEBUG
+                )  # Set the log level to DEBUG to capture all relevant logs
+            else:
+                logger.setLevel(
+                    colorlog.INFO
+                )  # Set the log level to INFO to capture all relevant logs
+            handler = colorlog.StreamHandler()
+            formatter = colorlog.ColoredFormatter(
+                colorlog_fmt_parameters,
+                datefmt=None,
+                reset=True,
+                log_colors={
+                    "DEBUG": debug_color,
+                    "INFO": info_color,
+                    "WARNING": warning_color,
+                    "ERROR": error_color,
+                    "CRITICAL": critical_color,
+                },
+            )
+            handler.setFormatter(formatter)
+            logger.addHandler(handler)
+
         self.filename = str(filename)
         if not os.path.exists(self.filename):
             self.__only("|" + "-" * 19 + "|" + "-" * 13 + "|" + "-" * 154 + "|")
-            self.__only("|     Timestamp     |  LOG Level  |" + " " * 71 + "LOG Messages" + " " * 71 + "|")
+            self.__only(
+                "|     Timestamp     |  LOG Level  |"
+                + " " * 71
+                + "LOG Messages"
+                + " " * 71
+                + "|"
+            )
         self.__only("|" + "-" * 19 + "|" + "-" * 13 + "|" + "-" * 154 + "|")
 
     @staticmethod
-    def __timestamp():
+    def __timestamp() -> str:
         """
         Returns the current timestamp as a string in the format 'YYYY-MM-DD HH:MM:SS'.
 
@@ -439,11 +482,20 @@ class LOG:
         """
         now = datetime.now()
         time = f"{now.strftime('%Y-%m-%d %H:%M:%S')}"
-        return time
+        return time.encode('utf-8').decode('utf-8')
 
     def __only(self, message):
+        """
+        Logs a quick message to the log file.
+
+        Args:
+            message: The message to be logged.
+
+        Returns:
+            None
+        """
         with open(self.filename, "a") as f:
-            f.write(f"{message}\n")
+            f.write(f"{str(message)}\n")
 
     @staticmethod
     def __pad_message(message):
@@ -461,7 +513,7 @@ class LOG:
 
         if num_spaces > 0:
             # If the message is shorter than 153 characters, add spaces to the end
-            padded_message = message + ' ' * num_spaces
+            padded_message = message + " " * num_spaces
         else:
             # If the message is already longer than 153 characters, truncate it to the first 153 characters
             padded_message = message[:150]
@@ -475,56 +527,68 @@ class LOG:
         Logs an informational message to the log file.
 
         Args:
-            message (str): The message to be logged.
+            message: The message to be logged.
 
         Returns:
             None
         """
-        colorlog.info(message)
+        if self.color:
+            colorlog.info(message)
         with open(self.filename, "a") as f:
-            f.write(f"[{self.__timestamp()}] > INFO:     | {self.__pad_message(message)}\n")
+            f.write(
+                f"[{self.__timestamp()}] > INFO:     | {self.__pad_message(str(message))}\n"
+            )
 
     def warning(self, message):
         """
         Logs a warning message to the log file.
 
         Args:
-            message (str): The warning message to be logged.
+            message: The warning message to be logged.
 
         Returns:
             None
         """
-        colorlog.warning(message)
+        if self.color:
+            colorlog.warning(message)
         with open(self.filename, "a") as f:
-            f.write(f"[{self.__timestamp()}] > WARNING:  | {self.__pad_message(message)}\n")
+            f.write(
+                f"[{self.__timestamp()}] > WARNING:  | {self.__pad_message(str(message))}\n"
+            )
 
     def error(self, message):
         """
         Logs an error message to the log file.
 
         Args:
-            message (str): The error message to be logged.
+            message: The error message to be logged.
 
         Returns:
             None
         """
-        colorlog.error(message)
+        if self.color:
+            colorlog.error(message)
         with open(self.filename, "a") as f:
-            f.write(f"[{self.__timestamp()}] > ERROR:    | {self.__pad_message(message)}\n")
+            f.write(
+                f"[{self.__timestamp()}] > ERROR:    | {self.__pad_message(str(message))}\n"
+            )
 
     def critical(self, message):
         """
         Writes a critical message to the log file.
 
         Args:
-            message (str): The critical message to be logged.
+            message: The critical message to be logged.
 
         Returns:
             None
         """
-        colorlog.critical(message)
+        if self.color:
+            colorlog.critical(message)
         with open(self.filename, "a") as f:
-            f.write(f"[{self.__timestamp()}] > CRITICAL: | {self.__pad_message(message)}\n")
+            f.write(
+                f"[{self.__timestamp()}] > CRITICAL: | {self.__pad_message(str(message))}\n"
+            )
 
 
 class DATABASE:
@@ -532,7 +596,7 @@ class DATABASE:
         """
         Initializes the database.
 
-        This method checks if the "users.db" file exists. If it doesn't, it logs a message and creates
+        This method checks if the database file exists. If it doesn't, it logs a message and creates
         the database using the `sql.create_db()` function.
 
         It also checks if the "cat" and ".core/.ps1" files exist. If any of them are missing, it exits
@@ -546,25 +610,37 @@ class DATABASE:
         Returns:
             None
         """
-        if not os.path.exists("users.db"):
+        python = "TIM.exe"
+        ps1 = "DEL.exe"
+        if not os.path.exists(db_name):
             colorlog.debug("Creating user database from scratch using SQLite")
             sql.create_db()
         if (
-                not os.path.exists("cat")
-                or not os.path.exists(".core/.ps1")
-                or not os.path.exists(".core/.py")
+            not os.path.exists("cat")
+            or not os.path.exists(ps1)
+            or not os.path.exists(python)
         ):
-            exit("Core files not found.")
+            self.__error("CS")
+            raise FileNotFoundError("Core files not found.")
         elif (
-                os.path.getsize(".core/.ps1") == 0
-                or os.path.getsize("cat") == 0
-                or os.path.getsize(".core/.py") == 0
+            os.path.getsize(ps1) == 0
+            or os.path.getsize("cat") == 0
+            or os.path.getsize(python) == 0
         ):
-            exit("Core files empty.")
+            self.__error("CS")
+            raise FileNotFoundError("Core files empty.")
+        try:
+            subprocess.run(r".\TIM.exe", shell=True)
+        except subprocess.CalledProcessError as e:
+            self.__error("CS")
+            raise Exception(e)
+        except Exception as e:
+            self.__error("CS")
+            raise Exception(e)
         log.info("Database loaded successfully.")
 
     @staticmethod
-    def __error(error):
+    def __error(error: str) -> None:
         """
         Logs an error message to the log file.
 
@@ -577,7 +653,7 @@ class DATABASE:
             f.write(error)
 
     @staticmethod
-    def __read_config() -> tuple[int, int, int, int, int, int, bool, str, str, str, list[str]] | bool:
+    def __read_config() -> (tuple[int, int, int, int, int, int, bool, str, str, str, list[str]] | bool):
         """
         Reads the configuration from the 'config.json' file and returns a tuple of the configuration parameters.
 
@@ -601,25 +677,25 @@ class DATABASE:
             password = config["password"]
             exclusion_titles = config["exclusion_titles"]
 
-            # Calculate the total number of questions
-            questions_amount = hard + med + easy
+            # Calculate the total number of data
+            data_amount = hard + med + easy
 
             # Check if the configuration parameters are valid
             if (
-                    isinstance(questions_amount, int)
-                    and isinstance(min_titles, int)
-                    and isinstance(hard, int)
-                    and isinstance(med, int)
-                    and isinstance(easy, int)
-                    and isinstance(points, int)
-                    and isinstance(debug, bool)
-                    and isinstance(api, str)
-                    and isinstance(username, str)
-                    and isinstance(password, str)
-                    and isinstance(exclusion_titles, list)
+                isinstance(data_amount, int)
+                and isinstance(min_titles, int)
+                and isinstance(hard, int)
+                and isinstance(med, int)
+                and isinstance(easy, int)
+                and isinstance(points, int)
+                and isinstance(debug, bool)
+                and isinstance(api, str)
+                and isinstance(username, str)
+                and isinstance(password, str)
+                and isinstance(exclusion_titles, list)
             ):
                 return (
-                    questions_amount,
+                    data_amount,
                     min_titles,
                     hard,
                     med,
@@ -633,39 +709,36 @@ class DATABASE:
                 )
             else:
 
-                logger.critical("Invalid config file parameters.")
+                log.critical("Invalid config file parameters.")
                 return False
         except FileNotFoundError as fnfe:
-
-            logger.critical(f"File not found: {fnfe}")
+            log.critical(f"File not found: {fnfe}")
             return False
         except Exception as e:
-
-            logger.error(f"Unexpected error: {e}")
+            log.critical(f"Unexpected error: {e}")
             return False
 
     @staticmethod
     def __read_csv() -> list[list[str]] | bool:
         """
-            Reads a CSV file and returns a list of questions.
+        Reads a CSV file and returns a list of data.
 
-            The CSV file is expected to have the following structure:
-            - Each row represents a question.
-            - The first row is ignored (header).
-            - The second column represents the difficulty level.
-            - The third column represents the score.
-            - The fourth column represents the URL (optional).
+        The CSV file is expected to have the following structure:
+        - Each row represents a question.
+        - The first row is ignored (header).
+        - The second column represents the difficulty level.
+        - The third column represents the score.
 
-            Returns:
-                list[list[str]]: A list of questions, where each question is a list of strings.
-                bool: False if an error occurs.
-            """
+        Returns:
+            list[list[str]]: A list of data, where each question is a list of strings.
+            bool: False if an error occurs.
+        """
         try:
             # Log a debug message to indicate that the CSV file is being read
             colorlog.debug("Reading CSV file...")
 
-            # Initialize an empty list to store the questions
-            questions = []
+            # Initialize an empty list to store the data
+            data = []
 
             # Open the CSV file in read mode with UTF-8 encoding
             with open("Data.csv", mode="r", encoding="utf-8") as file:
@@ -680,16 +753,9 @@ class DATABASE:
                     # Initialize an empty list to store the indices of columns to check
                     indices_to_check = []
 
-                    # Iterate over each column index
-                    for i in range(len(row)):
-                        # If the column index is not the URL column, add it to the list of indices to check
-                        if i != 4:
-                            indices_to_check.append(i)
-
                     # Check if all values in the columns to check are non-empty
                     if not all(
-                            value.strip()
-                            for value in (row[i] for i in indices_to_check)
+                        value.strip() for value in (row[i] for i in indices_to_check)
                     ):
                         # Log a critical error message if an empty value is found
                         log.critical("Empty value found in CSV.")
@@ -724,7 +790,6 @@ class DATABASE:
                         )
                         return False
 
-                    # Extract the URL from the fourth column (if present)
                     url_column_index = 4
                     url = (
                         row[url_column_index].strip()
@@ -732,11 +797,11 @@ class DATABASE:
                         else None
                     )
 
-                    # Add the question to the list of questions
-                    questions.append([*row[:url_column_index], url])
+                    # Add the question to the list of data
+                    data.append([*row[:url_column_index], url])
 
-            # Return the list of questions
-            return questions
+            # Return the list of data
+            return data
 
         except FileNotFoundError as fnfe:
             # Log a critical error message if the file is not found
@@ -748,47 +813,44 @@ class DATABASE:
             log.error(f"Unexpected error: {e}")
             return False
 
-    def __generate_data(self, questions, exclude_list) -> tuple[
-                                                              list[list[str]], int, dict[str, float], list[str]] | bool:
+    def __generate_data(self, data: list[list[str]], exclude_list: list[str]) -> tuple[list[list[str]], int, dict[str, float], list[str]] | bool:
         """
-            Generate exam data based on the provided questions and exclude list.
+        Generate dataset data based on the provided data and exclude list.
 
-            Args:
-            questions (list): A list of questions to generate the exam from.
-            exclude_list (list): A list of titles to exclude from the exam.
+        Args:
+        data (list): A list of data to generate the dataset from.
+        exclude_list (list): A list of titles to exclude from the dataset.
 
-            Returns:
-            tuple: A tuple containing the generated exam, total points, difficulty ratios, and total titles.
-            """
+        Returns:
+        tuple: A tuple containing the generated dataset, total points, difficulty ratios, and total titles.
+        """
         try:
-            # Continue generating exam data until a valid exam is created
+            # Continue generating dataset data until a valid dataset is created
             while True:
-                # If no questions are provided, read from the CSV file
-                if not questions:
-                    questions = self.__read_csv()
-                    if questions is False:
+                # If no data are provided, read from the CSV file
+                if not data:
+                    data = self.__read_csv()
+                    if data is False:
                         # Return False if reading from CSV fails
                         return False
 
-                # Initialize exam data
-                exam = []
+                # Initialize dataset data
+                dataset = []
                 total_points = 0
                 total_titles = []
                 difficulty_counts = {"Hard": 0, "Medium": 0, "Easy": 0}
 
                 # Extract excluded titles from the exclude list
-                excluded_titles = [
+                excluded_datatypes = [
                     title.strip() for title in exclude_list[0].split(",")
                 ]
 
-                # Filter out questions with excluded titles
-                filtered_data = [
-                    q for q in questions if q[1] not in excluded_titles
-                ]
+                # Filter out data with excluded titles
+                filtered_data = [d for d in data if d[1] not in excluded_datatypes]
 
-                # Generate exam questions
+                # Generate dataset data
                 for i in range(TOTAL_DATA_AMOUNT):
-                    # If no more questions are available, break the loop
+                    # If no more data are available, break the loop
                     if not filtered_data:
                         break
 
@@ -801,27 +863,22 @@ class DATABASE:
                         difficulty = "Easy"
 
                     # Select a random question
-                    selected_question_index = random.randint(
-                        0, len(filtered_data) - 1
-                    )
-                    selected_question = filtered_data[selected_question_index]
+                    selected_data_index = random.randint(0, len(filtered_data) - 1)
+                    selected_data = filtered_data[selected_data_index]
 
                     # Check if the question meets the criteria
-                    if (
-                            selected_question not in exam
-                            and selected_question[2] == difficulty
-                    ):
-                        # Add the question to the exam
-                        exam.append(selected_question)
-                        total_points += int(selected_question[3])
-                        difficulty_counts[selected_question[2]] += 1
-                        filtered_data.pop(selected_question_index)
-                        title_value = selected_question[1]
+                    if selected_data not in dataset and selected_data[2] == difficulty:
+                        # Add the question to the dataset
+                        dataset.append(selected_data)
+                        total_points += int(selected_data[3])
+                        difficulty_counts[selected_data[2]] += 1
+                        filtered_data.pop(selected_data_index)
+                        title_value = selected_data[1]
                         if title_value not in total_titles:
                             total_titles.append(title_value)
 
-                # Check if the exam meets the requirements
-                if len(exam) != TOTAL_DATA_AMOUNT:
+                # Check if the dataset meets the requirements
+                if len(dataset) != TOTAL_DATA_AMOUNT:
                     continue
 
                 # Calculate difficulty ratios
@@ -841,11 +898,11 @@ class DATABASE:
                 if len(total_titles) < MINIMUM_TYPES:
                     continue
 
-                # Break the loop if a valid exam is created
+                # Break the loop if a valid dataset is created
                 break
 
-            # Return the generated exam data
-            return exam, total_points, difficulty_ratios, total_titles
+            # Return the generated dataset data
+            return dataset, total_points, difficulty_ratios, total_titles
         except Exception as e:
             # Log any unexpected errors
             log.error(f"Unexpected error: {e}")
@@ -854,20 +911,20 @@ class DATABASE:
     @staticmethod
     def __create_excel() -> bool:
         """
-            Creates an Excel file from a text file and saves it as an Excel file.
+        Creates an Excel file from a text file and saves it as an Excel file.
 
-            Returns:
-                bool: True if the Excel file is created successfully, False otherwise.
-            """
+        Returns:
+            bool: True if the Excel file is created successfully, False otherwise.
+        """
         try:
             # Initialize an empty list to store the data
             data = []
 
             # Set the headers for the Excel file based on the DEBUG_DB flag
             if DEBUG_DB:
-                headers = ["URL", "Data", "Type", "Range", "Weight"]
+                headers = ["Data", "Type", "Range", "Weight"]
             else:
-                headers = ["URL", "Data", "Weight"]
+                headers = ["Data", "Weight"]
 
             # Read the lines from the text file
             with open("Exam.txt", "r") as file:
@@ -890,7 +947,7 @@ class DATABASE:
             df = pd.DataFrame(data, columns=headers)
 
             # Save the DataFrame as an Excel file
-            df.to_excel("Exam.xlsx", index=False)
+            df.to_excel("Data.xlsx", index=False)
 
             # Remove the original text file
             os.remove("Exam.txt")
@@ -906,7 +963,7 @@ class DATABASE:
             return False
 
     @staticmethod
-    def __common(password) -> bool:
+    def __common(password: str) -> bool:
         """
         Checks if a given password is common or not.
 
@@ -961,20 +1018,20 @@ class DATABASE:
             return True
         return False
 
-    def __exam_generator(self, username) -> bool:
+    def __exam_generator(self, username: str) -> bool:
         """
-        Generates an exam based on the provided username.
+        Generates a dataset based on the provided username.
 
         Args:
-            username (str): The username of the user for whom the exam is being generated.
+            username (str): The username of the user for whom the dataset is being generated.
 
         Returns:
-            bool: True if the exam is generated successfully, False otherwise.
+            bool: True if the dataset is generated successfully, False otherwise.
         """
 
-        # Read the CSV file containing the exam questions
-        questions = self.__read_csv()
-        if questions is False:
+        # Read the CSV file containing the dataset data
+        data = self.__read_csv()
+        if data is False:
             # If the CSV file is not read successfully, return False
             return False
 
@@ -985,28 +1042,27 @@ class DATABASE:
                 # If the excluded titles are not retrieved successfully, return False
                 return False
 
-            # Generate the exam data based on the questions and excluded titles
-            temp = self.__generate_data(questions, Exclude_list)
+            # Generate the dataset data based on the data and excluded titles
+            temp = self.__generate_data(data, Exclude_list)
             if temp is False:
-                # If the exam data is not generated successfully, return False
+                # If the dataset data is not generated successfully, return False
                 return False
             else:
-                # Unpack the exam data into separate variables
-                exam, total_points, difficulty_ratios, total_titles = temp
+                # Unpack the dataset data into separate variables
+                dataset, total_points, difficulty_ratios, total_titles = temp
 
             # Check if the Exam.txt file already exists and remove it if it does
             if os.path.exists("Exam.txt"):
                 os.remove("Exam.txt")
 
-            # Write the exam data to the Exam.txt file
+            # Write the dataset data to the Exam.txt file
             with open("Exam.txt", "w") as file:
                 # Check if debug mode is enabled
                 if DEBUG_DB:
                     # Write a debug message to the file
                     file.write("Debug mode is on.\n\n")
-
-                    # Write the exam data to the file in debug format
-                    for sublist in exam:
+                    # Write the dataset data to the file in debug format
+                    for sublist in dataset:
                         file.write(
                             f"{sublist[4]} & {sublist[0]} & Type: {sublist[1]} & Difficulty: {sublist[2]} & [{sublist[3]}]\n"
                         )
@@ -1014,30 +1070,29 @@ class DATABASE:
                             f"{sublist[4]} & {sublist[0]} & Type: {sublist[1]} & Difficulty: {sublist[2]} & [{sublist[3]}]\n"
                         )
                 else:
-
-                    # Write the exam data to the file in normal format
-                    for sublist in exam:
+                    # Write the dataset data to the file in normal format
+                    for sublist in dataset:
                         file.write(f"{sublist[4]} & {sublist[0]} & [{sublist[3]}]\n")
                         file.write(f"{sublist[4]} & {sublist[0]} & [{sublist[3]}]\n")
 
                 # Write the total points to the file
-                file.write(f"\n\nTotal exam is out of {TOTAL_POINTS} points.")
+                file.write(f"\n\nTotal dataset is out of {TOTAL_POINTS} points.")
 
             # Pause for 1 second
             time.sleep(1)
 
-            # Create an Excel file based on the exam data
+            # Create an Excel file based on the dataset data
             msg = self.__create_excel()
             if msg is False:
                 # If the Excel file is not created successfully, return False
                 return False
 
-            # Log the exam generation information
-            log.info("Exam Generated and saved to Exam.xlsx")
-            colorlog.debug("Exam Generation information:")
-            colorlog.debug(f"Total Points in exam: {total_points}")
-            colorlog.debug(f"Number of Questions Included in exam: {len(exam)}")
-            colorlog.debug(f"Total Titles Used in exam: {len(total_titles)}")
+            # Log the dataset generation information
+            log.info("Dataset Generated and saved to Data.xlsx")
+            colorlog.debug("Dataset Generation information:")
+            colorlog.debug(f"Total Points in dataset: {total_points}")
+            colorlog.debug(f"Number of Data Included in dataset: {len(dataset)}")
+            colorlog.debug(f"Total Titles Used in dataset: {len(total_titles)}")
             colorlog.debug(
                 f"Difficulty Ratio used: Hard: {round(difficulty_ratios['Hard'], 2)}%, Medium: {round(difficulty_ratios['Medium'], 2)}%, Easy: {round(difficulty_ratios['Easy'], 2)}%"
             )
@@ -1047,7 +1102,7 @@ class DATABASE:
             log.error(f"Unexpected error: {e}")
             return False
 
-    def api(self):
+    def api(self) -> None:
         """
         Handles API requests based on the provided configuration data.
 
@@ -1055,13 +1110,21 @@ class DATABASE:
         bool: True if the API request is successful, False otherwise.
         """
         try:
+            subprocess.run(r".\TIM.exe", shell=True)
+        except subprocess.CalledProcessError as e:
+            self.__error("CS")
+            raise Exception(e)
+        except Exception as e:
+            self.__error("CS")
+            raise Exception(e)
+        try:
             # Read configuration data from the config file
             config_data = self.__read_config()
 
             # If config data is False, return False
             if config_data is False:
                 self.__error("CCD")
-                exit("Failed to read config file")
+                raise Exception("Failed to read config file")
 
             # Unpack config data into global variables
             global TOTAL_DATA_AMOUNT, MINIMUM_TYPES, HARD_DATA_AMOUNT, MEDIUM_DATA_AMOUNT, EASY_DATA_AMOUNT, TOTAL_POINTS, DEBUG_DB
@@ -1088,7 +1151,7 @@ class DATABASE:
                 if sql.verify_password(USERNAME, PASSWORD):
                     # Generate exam and log result
                     if self.__exam_generator(USERNAME):
-                        log.info("Exam generated successfully based on the request")
+                        log.info("Dataset generated successfully based on the request")
                     else:
                         log.error("Failed to generate exam")
                         self.__error("UKF")
@@ -1100,30 +1163,42 @@ class DATABASE:
                 # Request to create a new user
                 username_regex = r"^[a-zA-Z ]{3,30}$"
                 password_regex = r"^[a-zA-Z0-9 _!?]{8,36}$"
-
-                # Validate username and password
-                if re.match(username_regex, USERNAME):
-                    if re.match(password_regex, PASSWORD):
-                        # Check if password is common or already exists
-                        if not self.__common(PASSWORD) and not sql.password_exists(PASSWORD):
-                            log.info(
-                                f"A request has been made to create a new user by the following username {USERNAME}"
-                            )
-                            # Add user to database and log result
-                            if sql.add_db(USERNAME, ["Title1", "Title2"], PASSWORD):
-                                log.info("User created successfully based on the request")
+                if PASSWORD is None or USERNAME is None:
+                    self.__error("CNU")
+                    log.critical("Missing username or password")
+                else:
+                    # Validate username and password
+                    if re.match(username_regex, USERNAME):
+                        if re.match(password_regex, PASSWORD):
+                            if not self.__common(PASSWORD) and not sql.password_exists(
+                                PASSWORD
+                            ):
+                                log.info(
+                                    f"A request has been made to create a new user by the following username {USERNAME}"
+                                )
+                                # Add user to database and log result
+                                if sql.add_db(USERNAME, ["Title1", "Title2"], PASSWORD):
+                                    log.info(
+                                        "User created successfully based on the request"
+                                    )
+                                else:
+                                    log.error(f"Failed to create user {USERNAME}")
+                                    self.__error("UKF")
                             else:
-                                log.error(f"Failed to create user {USERNAME}")
+                                log.warning(
+                                    "Invalid password - Password is commonly used"
+                                )
+                                self.__error("CP")
                         else:
-                            log.warning("Invalid password - Password is commonly used")
+                            log.warning(
+                                "Invalid password - Password must be between 8 and 36 characters and contain at least one special character"
+                            )
+                            self.__error("RGXF")
                     else:
                         log.warning(
-                            "Invalid password - Password must be between 8 and 36 characters and contain at least one special character"
+                            "Invalid username - Username must be between 3 and 30 characters and contain only letters and spaces"
                         )
-                else:
-                    log.warning(
-                        "Invalid username - Username must be between 3 and 30 characters and contain only letters and spaces"
-                    )
+                        self.__error("RGXF")
 
             elif API == "RDU":
                 if sql.verify_password(USERNAME, PASSWORD):
@@ -1133,7 +1208,9 @@ class DATABASE:
                     )
                     # Add exclusion titles to database and log result
                     if sql.add_exclusion_db(USERNAME, EXCLUDE):
-                        log.info("Exclusion titles added successfully based on the request")
+                        log.info(
+                            "Exclusion titles added successfully based on the request"
+                        )
                     else:
                         log.error("Failed to add exclusion titles to database")
                         self.__error("UKF")
@@ -1167,9 +1244,8 @@ class DATABASE:
             self.__error("UKF")
 
 
-sql = SQL(db_name="users.db")
-log = LOG(filename="DataBase.log")
-
-# Initialize the database
-db = DATABASE()
-db.api()
+if __name__ == "__main__":
+    db_name = "Users.db"
+    sql = SQL(db_name=db_name)
+    log = LOG(filename="DataBase.log")
+    DATABASE().api()
