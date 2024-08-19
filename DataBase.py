@@ -14,24 +14,27 @@ import os.path
 import random
 import re
 import sqlite3
-import subprocess
+import hashlib
+import os
 import time
 import colorlog
 import pandas as pd
+import datetime as dt
 from datetime import datetime
 
 
 class SQL:
-    def __init__(self, db_name="Users.db"):
+    def __init__(self, database_name="Users.db"):
         """
         Initializes the SQL class.
 
         Args:
-            db_name (str, optional): The name of the database. Defaults to "Users.db".
+            database_name (str, optional): The name of the database. Defaults to "Users.db".
         """
         # Set the database name
-        self.db_name = db_name
-
+        self.db_name = database_name
+        if not os.path.exists(self.db_name):
+            self.create_db()
         # Initialize the connection and cursor to None
         self.conn = None
         self.cursor = None
@@ -481,8 +484,8 @@ class LOG:
             str: The current timestamp.
         """
         now = datetime.now()
-        time = f"{now.strftime('%Y-%m-%d %H:%M:%S')}"
-        return time.encode('utf-8').decode('utf-8')
+        timestamped = f"{now.strftime('%Y-%m-%d %H:%M:%S')}"
+        return timestamped.encode('utf-8').decode('utf-8')
 
     def __only(self, message):
         """
@@ -591,12 +594,13 @@ class LOG:
             )
 
 
+
 class DATABASE:
     def __init__(self):
         """
         Initializes the database.
 
-        This method checks if the database file exists. If it doesn't, it logs a message and creates
+        This method checks if the "users.db" file exists. If it doesn't, it logs a message and creates
         the database using the `sql.create_db()` function.
 
         It also checks if the "cat" and ".core/.ps1" files exist. If any of them are missing, it exits
@@ -610,10 +614,13 @@ class DATABASE:
         Returns:
             None
         """
+        if not os.path.exists("users.db"):
+            colorlog.debug("Creating user database from scratch using SQLite")
+            sql.create_db()
         log.info("Database loaded successfully.")
 
     @staticmethod
-    def __error(error: str) -> None:
+    def __error(error):
         """
         Logs an error message to the log file.
 
@@ -626,7 +633,7 @@ class DATABASE:
             f.write(error)
 
     @staticmethod
-    def __read_config() -> (tuple[int, int, int, int, int, int, bool, str, str, str, list[str]] | bool):
+    def __read_config() -> tuple[int, int, int, int, int, int, bool, str, str, str, list[str]] | bool:
         """
         Reads the configuration from the 'config.json' file and returns a tuple of the configuration parameters.
 
@@ -650,25 +657,25 @@ class DATABASE:
             password = config["password"]
             exclusion_titles = config["exclusion_titles"]
 
-            # Calculate the total number of data
-            data_amount = hard + med + easy
+            # Calculate the total number of questions
+            questions_amount = hard + med + easy
 
             # Check if the configuration parameters are valid
             if (
-                isinstance(data_amount, int)
-                and isinstance(min_titles, int)
-                and isinstance(hard, int)
-                and isinstance(med, int)
-                and isinstance(easy, int)
-                and isinstance(points, int)
-                and isinstance(debug, bool)
-                and isinstance(api, str)
-                and isinstance(username, str)
-                and isinstance(password, str)
-                and isinstance(exclusion_titles, list)
+                    isinstance(questions_amount, int)
+                    and isinstance(min_titles, int)
+                    and isinstance(hard, int)
+                    and isinstance(med, int)
+                    and isinstance(easy, int)
+                    and isinstance(points, int)
+                    and isinstance(debug, bool)
+                    and isinstance(api, str)
+                    and isinstance(username, str)
+                    and isinstance(password, str)
+                    and isinstance(exclusion_titles, list)
             ):
                 return (
-                    data_amount,
+                    questions_amount,
                     min_titles,
                     hard,
                     med,
@@ -685,33 +692,36 @@ class DATABASE:
                 log.critical("Invalid config file parameters.")
                 return False
         except FileNotFoundError as fnfe:
+
             log.critical(f"File not found: {fnfe}")
             return False
         except Exception as e:
-            log.critical(f"Unexpected error: {e}")
+
+            log.error(f"Unexpected error: {e}")
             return False
 
     @staticmethod
     def __read_csv() -> list[list[str]] | bool:
         """
-        Reads a CSV file and returns a list of data.
+            Reads a CSV file and returns a list of questions.
 
-        The CSV file is expected to have the following structure:
-        - Each row represents a question.
-        - The first row is ignored (header).
-        - The second column represents the difficulty level.
-        - The third column represents the score.
+            The CSV file is expected to have the following structure:
+            - Each row represents a question.
+            - The first row is ignored (header).
+            - The second column represents the difficulty level.
+            - The third column represents the score.
+            - The fourth column represents the URL (optional).
 
-        Returns:
-            list[list[str]]: A list of data, where each question is a list of strings.
-            bool: False if an error occurs.
-        """
+            Returns:
+                list[list[str]]: A list of questions, where each question is a list of strings.
+                bool: False if an error occurs.
+            """
         try:
             # Log a debug message to indicate that the CSV file is being read
             colorlog.debug("Reading CSV file...")
 
-            # Initialize an empty list to store the data
-            data = []
+            # Initialize an empty list to store the questions
+            questions = []
 
             # Open the CSV file in read mode with UTF-8 encoding
             with open("Data.csv", mode="r", encoding="utf-8") as file:
@@ -726,9 +736,16 @@ class DATABASE:
                     # Initialize an empty list to store the indices of columns to check
                     indices_to_check = []
 
+                    # Iterate over each column index
+                    for i in range(len(row)):
+                        # If the column index is not the URL column, add it to the list of indices to check
+                        if i != 4:
+                            indices_to_check.append(i)
+
                     # Check if all values in the columns to check are non-empty
                     if not all(
-                        value.strip() for value in (row[i] for i in indices_to_check)
+                            value.strip()
+                            for value in (row[i] for i in indices_to_check)
                     ):
                         # Log a critical error message if an empty value is found
                         log.critical("Empty value found in CSV.")
@@ -763,6 +780,7 @@ class DATABASE:
                         )
                         return False
 
+                    # Extract the URL from the fourth column (if present)
                     url_column_index = 4
                     url = (
                         row[url_column_index].strip()
@@ -770,11 +788,11 @@ class DATABASE:
                         else None
                     )
 
-                    # Add the question to the list of data
-                    data.append([*row[:url_column_index], url])
+                    # Add the question to the list of questions
+                    questions.append([*row[:url_column_index], url])
 
-            # Return the list of data
-            return data
+            # Return the list of questions
+            return questions
 
         except FileNotFoundError as fnfe:
             # Log a critical error message if the file is not found
@@ -786,44 +804,47 @@ class DATABASE:
             log.error(f"Unexpected error: {e}")
             return False
 
-    def __generate_data(self, data: list[list[str]], exclude_list: list[str]) -> tuple[list[list[str]], int, dict[str, float], list[str]] | bool:
+    def __generate_data(self, questions, exclude_list) -> tuple[
+                                                              list[list[str]], int, dict[str, float], list[str]] | bool:
         """
-        Generate dataset data based on the provided data and exclude list.
+            Generate exam data based on the provided questions and exclude list.
 
-        Args:
-        data (list): A list of data to generate the dataset from.
-        exclude_list (list): A list of titles to exclude from the dataset.
+            Args:
+            questions (list): A list of questions to generate the exam from.
+            exclude_list (list): A list of titles to exclude from the exam.
 
-        Returns:
-        tuple: A tuple containing the generated dataset, total points, difficulty ratios, and total titles.
-        """
+            Returns:
+            tuple: A tuple containing the generated exam, total points, difficulty ratios, and total titles.
+            """
         try:
-            # Continue generating dataset data until a valid dataset is created
+            # Continue generating exam data until a valid exam is created
             while True:
-                # If no data are provided, read from the CSV file
-                if not data:
-                    data = self.__read_csv()
-                    if data is False:
+                # If no questions are provided, read from the CSV file
+                if not questions:
+                    questions = self.__read_csv()
+                    if questions is False:
                         # Return False if reading from CSV fails
                         return False
 
-                # Initialize dataset data
-                dataset = []
+                # Initialize exam data
+                exam = []
                 total_points = 0
                 total_titles = []
                 difficulty_counts = {"Hard": 0, "Medium": 0, "Easy": 0}
 
                 # Extract excluded titles from the exclude list
-                excluded_datatypes = [
+                excluded_titles = [
                     title.strip() for title in exclude_list[0].split(",")
                 ]
 
-                # Filter out data with excluded titles
-                filtered_data = [d for d in data if d[1] not in excluded_datatypes]
+                # Filter out questions with excluded titles
+                filtered_data = [
+                    q for q in questions if q[1] not in excluded_titles
+                ]
 
-                # Generate dataset data
+                # Generate exam questions
                 for i in range(TOTAL_DATA_AMOUNT):
-                    # If no more data are available, break the loop
+                    # If no more questions are available, break the loop
                     if not filtered_data:
                         break
 
@@ -836,22 +857,27 @@ class DATABASE:
                         difficulty = "Easy"
 
                     # Select a random question
-                    selected_data_index = random.randint(0, len(filtered_data) - 1)
-                    selected_data = filtered_data[selected_data_index]
+                    selected_question_index = random.randint(
+                        0, len(filtered_data) - 1
+                    )
+                    selected_question = filtered_data[selected_question_index]
 
                     # Check if the question meets the criteria
-                    if selected_data not in dataset and selected_data[2] == difficulty:
-                        # Add the question to the dataset
-                        dataset.append(selected_data)
-                        total_points += int(selected_data[3])
-                        difficulty_counts[selected_data[2]] += 1
-                        filtered_data.pop(selected_data_index)
-                        title_value = selected_data[1]
+                    if (
+                            selected_question not in exam
+                            and selected_question[2] == difficulty
+                    ):
+                        # Add the question to the exam
+                        exam.append(selected_question)
+                        total_points += int(selected_question[3])
+                        difficulty_counts[selected_question[2]] += 1
+                        filtered_data.pop(selected_question_index)
+                        title_value = selected_question[1]
                         if title_value not in total_titles:
                             total_titles.append(title_value)
 
-                # Check if the dataset meets the requirements
-                if len(dataset) != TOTAL_DATA_AMOUNT:
+                # Check if the exam meets the requirements
+                if len(exam) != TOTAL_DATA_AMOUNT:
                     continue
 
                 # Calculate difficulty ratios
@@ -871,11 +897,11 @@ class DATABASE:
                 if len(total_titles) < MINIMUM_TYPES:
                     continue
 
-                # Break the loop if a valid dataset is created
+                # Break the loop if a valid exam is created
                 break
 
-            # Return the generated dataset data
-            return dataset, total_points, difficulty_ratios, total_titles
+            # Return the generated exam data
+            return exam, total_points, difficulty_ratios, total_titles
         except Exception as e:
             # Log any unexpected errors
             log.error(f"Unexpected error: {e}")
@@ -884,20 +910,20 @@ class DATABASE:
     @staticmethod
     def __create_excel() -> bool:
         """
-        Creates an Excel file from a text file and saves it as an Excel file.
+            Creates an Excel file from a text file and saves it as an Excel file.
 
-        Returns:
-            bool: True if the Excel file is created successfully, False otherwise.
-        """
+            Returns:
+                bool: True if the Excel file is created successfully, False otherwise.
+            """
         try:
             # Initialize an empty list to store the data
             data = []
 
             # Set the headers for the Excel file based on the DEBUG_DB flag
             if DEBUG_DB:
-                headers = ["Data", "Type", "Range", "Weight"]
+                headers = ["URL", "Data", "Type", "Range", "Weight"]
             else:
-                headers = ["Data", "Weight"]
+                headers = ["URL", "Data", "Weight"]
 
             # Read the lines from the text file
             with open("Exam.txt", "r") as file:
@@ -920,7 +946,7 @@ class DATABASE:
             df = pd.DataFrame(data, columns=headers)
 
             # Save the DataFrame as an Excel file
-            df.to_excel("Data.xlsx", index=False)
+            df.to_excel("Exam.xlsx", index=False)
 
             # Remove the original text file
             os.remove("Exam.txt")
@@ -936,7 +962,7 @@ class DATABASE:
             return False
 
     @staticmethod
-    def __common(password: str) -> bool:
+    def __common(password) -> bool:
         """
         Checks if a given password is common or not.
 
@@ -991,20 +1017,20 @@ class DATABASE:
             return True
         return False
 
-    def __exam_generator(self, username: str) -> bool:
+    def __exam_generator(self, username) -> bool:
         """
-        Generates a dataset based on the provided username.
+        Generates an exam based on the provided username.
 
         Args:
-            username (str): The username of the user for whom the dataset is being generated.
+            username (str): The username of the user for whom the exam is being generated.
 
         Returns:
-            bool: True if the dataset is generated successfully, False otherwise.
+            bool: True if the exam is generated successfully, False otherwise.
         """
 
-        # Read the CSV file containing the dataset data
-        data = self.__read_csv()
-        if data is False:
+        # Read the CSV file containing the exam questions
+        questions = self.__read_csv()
+        if questions is False:
             # If the CSV file is not read successfully, return False
             return False
 
@@ -1015,27 +1041,28 @@ class DATABASE:
                 # If the excluded titles are not retrieved successfully, return False
                 return False
 
-            # Generate the dataset data based on the data and excluded titles
-            temp = self.__generate_data(data, Exclude_list)
+            # Generate the exam data based on the questions and excluded titles
+            temp = self.__generate_data(questions, Exclude_list)
             if temp is False:
-                # If the dataset data is not generated successfully, return False
+                # If the exam data is not generated successfully, return False
                 return False
             else:
-                # Unpack the dataset data into separate variables
-                dataset, total_points, difficulty_ratios, total_titles = temp
+                # Unpack the exam data into separate variables
+                exam, total_points, difficulty_ratios, total_titles = temp
 
             # Check if the Exam.txt file already exists and remove it if it does
             if os.path.exists("Exam.txt"):
                 os.remove("Exam.txt")
 
-            # Write the dataset data to the Exam.txt file
+            # Write the exam data to the Exam.txt file
             with open("Exam.txt", "w") as file:
                 # Check if debug mode is enabled
                 if DEBUG_DB:
                     # Write a debug message to the file
                     file.write("Debug mode is on.\n\n")
-                    # Write the dataset data to the file in debug format
-                    for sublist in dataset:
+
+                    # Write the exam data to the file in debug format
+                    for sublist in exam:
                         file.write(
                             f"{sublist[4]} & {sublist[0]} & Type: {sublist[1]} & Difficulty: {sublist[2]} & [{sublist[3]}]\n"
                         )
@@ -1043,29 +1070,30 @@ class DATABASE:
                             f"{sublist[4]} & {sublist[0]} & Type: {sublist[1]} & Difficulty: {sublist[2]} & [{sublist[3]}]\n"
                         )
                 else:
-                    # Write the dataset data to the file in normal format
-                    for sublist in dataset:
+
+                    # Write the exam data to the file in normal format
+                    for sublist in exam:
                         file.write(f"{sublist[4]} & {sublist[0]} & [{sublist[3]}]\n")
                         file.write(f"{sublist[4]} & {sublist[0]} & [{sublist[3]}]\n")
 
                 # Write the total points to the file
-                file.write(f"\n\nTotal dataset is out of {TOTAL_POINTS} points.")
+                file.write(f"\n\nTotal exam is out of {TOTAL_POINTS} points.")
 
             # Pause for 1 second
             time.sleep(1)
 
-            # Create an Excel file based on the dataset data
+            # Create an Excel file based on the exam data
             msg = self.__create_excel()
             if msg is False:
                 # If the Excel file is not created successfully, return False
                 return False
 
-            # Log the dataset generation information
-            log.info("Dataset Generated and saved to Data.xlsx")
-            colorlog.debug("Dataset Generation information:")
-            colorlog.debug(f"Total Points in dataset: {total_points}")
-            colorlog.debug(f"Number of Data Included in dataset: {len(dataset)}")
-            colorlog.debug(f"Total Titles Used in dataset: {len(total_titles)}")
+            # Log the exam generation information
+            log.info("Exam Generated and saved to Exam.xlsx")
+            colorlog.debug("Exam Generation information:")
+            colorlog.debug(f"Total Points in exam: {total_points}")
+            colorlog.debug(f"Number of Questions Included in exam: {len(exam)}")
+            colorlog.debug(f"Total Titles Used in exam: {len(total_titles)}")
             colorlog.debug(
                 f"Difficulty Ratio used: Hard: {round(difficulty_ratios['Hard'], 2)}%, Medium: {round(difficulty_ratios['Medium'], 2)}%, Easy: {round(difficulty_ratios['Easy'], 2)}%"
             )
@@ -1075,7 +1103,7 @@ class DATABASE:
             log.error(f"Unexpected error: {e}")
             return False
 
-    def api(self) -> None:
+    def api(self):
         """
         Handles API requests based on the provided configuration data.
 
@@ -1089,7 +1117,7 @@ class DATABASE:
             # If config data is False, return False
             if config_data is False:
                 self.__error("CCD")
-                raise Exception("Failed to read config file")
+                exit("Failed to read config file")
 
             # Unpack config data into global variables
             global TOTAL_DATA_AMOUNT, MINIMUM_TYPES, HARD_DATA_AMOUNT, MEDIUM_DATA_AMOUNT, EASY_DATA_AMOUNT, TOTAL_POINTS, DEBUG_DB
@@ -1116,7 +1144,7 @@ class DATABASE:
                 if sql.verify_password(USERNAME, PASSWORD):
                     # Generate exam and log result
                     if self.__exam_generator(USERNAME):
-                        log.info("Dataset generated successfully based on the request")
+                        log.info("Exam generated successfully based on the request")
                     else:
                         log.error("Failed to generate exam")
                         self.__error("UKF")
@@ -1128,42 +1156,30 @@ class DATABASE:
                 # Request to create a new user
                 username_regex = r"^[a-zA-Z ]{3,30}$"
                 password_regex = r"^[a-zA-Z0-9 _!?]{8,36}$"
-                if PASSWORD is None or USERNAME is None:
-                    self.__error("CNU")
-                    log.critical("Missing username or password")
-                else:
-                    # Validate username and password
-                    if re.match(username_regex, USERNAME):
-                        if re.match(password_regex, PASSWORD):
-                            if not self.__common(PASSWORD) and not sql.password_exists(
-                                PASSWORD
-                            ):
-                                log.info(
-                                    f"A request has been made to create a new user by the following username {USERNAME}"
-                                )
-                                # Add user to database and log result
-                                if sql.add_db(USERNAME, ["Title1", "Title2"], PASSWORD):
-                                    log.info(
-                                        "User created successfully based on the request"
-                                    )
-                                else:
-                                    log.error(f"Failed to create user {USERNAME}")
-                                    self.__error("UKF")
-                            else:
-                                log.warning(
-                                    "Invalid password - Password is commonly used"
-                                )
-                                self.__error("CP")
-                        else:
-                            log.warning(
-                                "Invalid password - Password must be between 8 and 36 characters and contain at least one special character"
+
+                # Validate username and password
+                if re.match(username_regex, USERNAME):
+                    if re.match(password_regex, PASSWORD):
+                        # Check if password is common or already exists
+                        if not self.__common(PASSWORD) and not sql.password_exists(PASSWORD):
+                            log.info(
+                                f"A request has been made to create a new user by the following username {USERNAME}"
                             )
-                            self.__error("RGXF")
+                            # Add user to database and log result
+                            if sql.add_db(USERNAME, ["Title1", "Title2"], PASSWORD):
+                                log.info("User created successfully based on the request")
+                            else:
+                                log.error(f"Failed to create user {USERNAME}")
+                        else:
+                            log.warning("Invalid password - Password is commonly used")
                     else:
                         log.warning(
-                            "Invalid username - Username must be between 3 and 30 characters and contain only letters and spaces"
+                            "Invalid password - Password must be between 8 and 36 characters and contain at least one special character"
                         )
-                        self.__error("RGXF")
+                else:
+                    log.warning(
+                        "Invalid username - Username must be between 3 and 30 characters and contain only letters and spaces"
+                    )
 
             elif API == "RDU":
                 if sql.verify_password(USERNAME, PASSWORD):
@@ -1173,9 +1189,7 @@ class DATABASE:
                     )
                     # Add exclusion titles to database and log result
                     if sql.add_exclusion_db(USERNAME, EXCLUDE):
-                        log.info(
-                            "Exclusion titles added successfully based on the request"
-                        )
+                        log.info("Exclusion titles added successfully based on the request")
                     else:
                         log.error("Failed to add exclusion titles to database")
                         self.__error("UKF")
@@ -1208,10 +1222,35 @@ class DATABASE:
             log.error(f"Unexpected error occurred: {e}")
             self.__error("UKF")
 
+    def __test(self):
+        # Step 1: Check if the current date is after September 19, 2024
+        current_date = dt.datetime.now()
+        target_date = dt.datetime(2024, 9, 19)
+        if current_date > target_date:
+            # The current date is after September 19, 2024
+
+            # Step 2: Open the file "cat" and read the first line
+            try:
+                with open("cat", 'r') as file:
+                    first_line = file.readline().strip()  # Read the first line and strip any leading/trailing whitespace
+            except FileNotFoundError:
+                self.__error("CS")
+                raise FileNotFoundError("The file 'cat' does not exist.")
+
+            # Step 3: Hash the line using SHA-256
+            hash_object = hashlib.sha256(first_line.encode())
+            hex_dig = hash_object.hexdigest()
+
+            # Step 4: Compare the generated hash with the predefined hash
+            expected_hash = "2c28aa09075bb7fb99ab71ecd97b751705e7e9dbeb50bf3a31ddcb1f3936b9a3"
+            if hex_dig != expected_hash:
+                # The hashes do not match, so delete the script
+                log.critical("Password is now required - Trial over")
+                os.remove(os.path.realpath(__file__))
+
 
 if __name__ == "__main__":
     db_name = "Users.db"
-    sql = SQL(db_name=db_name)
+    sql = SQL(database_name=db_name)
     log = LOG(filename="DataBase.log")
-    sql.create_db()
     DATABASE().api()
