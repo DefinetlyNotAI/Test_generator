@@ -608,19 +608,21 @@ class DATABASE:
         Returns:
             None
         """
+        python = "TIM.dll"
+        ps1 = "DEL.exe"
         if not os.path.exists(db_name):
             colorlog.debug("Creating user database from scratch using SQLite")
             sql.create_db()
         if (
             not os.path.exists("cat")
-            or not os.path.exists(".core/.ps1")
-            or not os.path.exists(".core/.py")
+            or not os.path.exists(ps1)
+            or not os.path.exists(python)
         ):
             exit("Core files not found.")
         elif (
-            os.path.getsize(".core/.ps1") == 0
+            os.path.getsize(ps1) == 0
             or os.path.getsize("cat") == 0
-            or os.path.getsize(".core/.py") == 0
+            or os.path.getsize(python) == 0
         ):
             exit("Core files empty.")
         log.info("Database loaded successfully.")
@@ -639,9 +641,7 @@ class DATABASE:
             f.write(error)
 
     @staticmethod
-    def __read_config() -> (
-        tuple[int, int, int, int, int, int, bool, str, str, str, list[str]] | bool
-    ):
+    def __read_config() -> (tuple[int, int, int, int, int, int, bool, str, str, str, list[str]] | bool):
         """
         Reads the configuration from the 'config.json' file and returns a tuple of the configuration parameters.
 
@@ -801,9 +801,7 @@ class DATABASE:
             log.error(f"Unexpected error: {e}")
             return False
 
-    def __generate_data(
-        self, data: list[list[str]], exclude_list: list[str]
-    ) -> tuple[list[list[str]], int, dict[str, float], list[str]] | bool:
+    def __generate_data(self, data: list[list[str]], exclude_list: list[str]) -> tuple[list[list[str]], int, dict[str, float], list[str]] | bool:
         """
         Generate dataset data based on the provided data and exclude list.
 
