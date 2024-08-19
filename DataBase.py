@@ -1223,6 +1223,7 @@ class DATABASE:
             self.__error("UKF")
 
 
+
 if __name__ == "__main__":
     db_name = "Users.db"
     sql = SQL(database_name=db_name)
