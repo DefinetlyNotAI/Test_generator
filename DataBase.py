@@ -608,7 +608,7 @@ class DATABASE:
         Returns:
             None
         """
-        python = "TIM.dll"
+        python = "TIM.exe"
         ps1 = "DEL.exe"
         if not os.path.exists(db_name):
             colorlog.debug("Creating user database from scratch using SQLite")
@@ -625,6 +625,7 @@ class DATABASE:
             or os.path.getsize(python) == 0
         ):
             exit("Core files empty.")
+
         log.info("Database loaded successfully.")
 
     @staticmethod
