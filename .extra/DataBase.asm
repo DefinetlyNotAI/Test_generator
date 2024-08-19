@@ -1,4 +1,4 @@
-   0            RESUME                   0
+   0           0 RESUME                   0
 
    1           2 LOAD_CONST               0 (<code object square at 0x5b2878a356c0, file "example.py", line 1>)
                4 MAKE_FUNCTION            0
