@@ -14,24 +14,27 @@ import os.path
 import random
 import re
 import sqlite3
-import subprocess
+import hashlib
+import os
 import time
 import colorlog
 import pandas as pd
+import datetime as dt
 from datetime import datetime
 
 
 class SQL:
-    def __init__(self, db_name="Users.db"):
+    def __init__(self, database_name="Users.db"):
         """
         Initializes the SQL class.
 
         Args:
-            db_name (str, optional): The name of the database. Defaults to "Users.db".
+            database_name (str, optional): The name of the database. Defaults to "Users.db".
         """
         # Set the database name
-        self.db_name = db_name
-
+        self.db_name = database_name
+        if not os.path.exists(self.db_name):
+            self.create_db()
         # Initialize the connection and cursor to None
         self.conn = None
         self.cursor = None
@@ -481,8 +484,8 @@ class LOG:
             str: The current timestamp.
         """
         now = datetime.now()
-        time = f"{now.strftime('%Y-%m-%d %H:%M:%S')}"
-        return time.encode('utf-8').decode('utf-8')
+        timestamped = f"{now.strftime('%Y-%m-%d %H:%M:%S')}"
+        return timestamped.encode('utf-8').decode('utf-8')
 
     def __only(self, message):
         """
@@ -589,6 +592,7 @@ class LOG:
             f.write(
                 f"[{self.__timestamp()}] > CRITICAL: | {self.__pad_message(str(message))}\n"
             )
+
 
 
 class DATABASE:
@@ -1222,7 +1226,6 @@ class DATABASE:
 
 if __name__ == "__main__":
     db_name = "Users.db"
-    sql = SQL(db_name=db_name)
+    sql = SQL(database_name=db_name)
     log = LOG(filename="DataBase.log")
-    sql.create_db()
     DATABASE().api()
