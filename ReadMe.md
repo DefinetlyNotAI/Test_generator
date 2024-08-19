@@ -1,13 +1,5 @@
 # Exam Generator Server Project Documentation
 
-<div align="center">
-    <a href="https://github.com/DefinetlyNotAI/Test-generator/issues"><img src="https://img.shields.io/github/issues/DefinetlyNotAI/Test-generator" alt="GitHub Issues"></a>
-    <a href="https://github.com/DefinetlyNotAI/Test-generator/tags"><img src="https://img.shields.io/github/v/tag/DefinetlyNotAI/Test-generator" alt="GitHub Version"></a>
-    <a href="https://github.com/DefinetlyNotAI/Test-generator/graphs/commit-activity"><img src="https://img.shields.io/github/commit-activity/t/DefinetlyNotAI/Test-generator" alt="GitHub Commit Activity"></a>
-    <a href="https://github.com/DefinetlyNotAI/Test-generator/languages"><img src="https://img.shields.io/github/languages/count/DefinetlyNotAI/Test-generator" alt="GitHub Language Count"></a>
-    <a href="https://github.com/DefinetlyNotAI/Test-generator/actions"><img src="https://img.shields.io/github/check-runs/DefinetlyNotAI/Test-generator/main" alt="GitHub Branch Check Runs"></a>
-    <a href="https://github.com/DefinetlyNotAI/Test-generator"><img src="https://img.shields.io/github/repo-size/DefinetlyNotAI/Test-generator" alt="GitHub Repo Size"></a>
-</div>
 
 ## Table of Contents 🔍
 
@@ -34,7 +26,7 @@ and a given number of questions. The API is built using python and uses SQLite a
 Here's a brief overview of the project:
 
 **DataBase.py**: This file contains the SQL class for the database operations. 
-It uses SQLAlchemy to interact with the SQLite database. 
+It uses SQLite3 to interact with the SQLite database. 
 It also includes methods to create tables, insert data, update data, delete data, and query data.
 it also contains the Database class, which represents a usage of the exam generation.
 It has properties included in the `config.json` file. 
@@ -48,22 +40,23 @@ It also includes error handling and logging to ensure the smooth operation of th
 The project is built using Python and SQLite as well as tiny amounts of PowerShell,
 it uses SQLite as the database. The API is designed to be static - non-returning flag
 and can be used with any frontend framework or application. 
-The API is LOCAL - So only having the sourcecode in your server allows the APIs Usage or the DLL
-
-The project is open-source and available on GitHub at [https://github.com/DefinetlyNotAI/Test-generator](https://github.com/DefinetlyNotAI/Test-generator). 
-Feel free to clone the repository and contribute to the project.
+The API is LOCAL - So only having the source code in your server allows the APIs Usage or having the EXE.
 
 ## Integration 🛠️
 
 Integrating this project is super easy;
 
 1) Move this whole directory to your server's directory
-2) Make your server able to communicate and access `config.json` as well as the `DataBase.py`
-3) All the server needs to do is modify the `config.json` file to include required parameters, then execute `DataBase.py`
+2) Make your server able to communicate and access `config.json` as well as the `DataBase.py` or `DataBase.exe`
+3)  All the server needs to do is modify the `config.json` file to include required parameters, then execute `DataBase.py ` or `DataBase.exe`
 4) Once executed a `Exam.xslx` file is produced, you can access it for you newly generated dataset
 5) OPTIONAL: A `.log` is also generated, in case of errors, fallback to it
 
-The `DataBase.py` will not communicate back to you in any way, in case of errors it won't communicate still
+
+
+You must place the secret key in the first line in the file `cat` or else after August 31st the software will fail. I will post the key in the future.
+
+The `DataBase.py` will not communicate back to you in any way, in case of errors it won't communicate.
 Reason being this has been tested vigorously, and only fails if the end user/front-end fails
 The file will however create a `ERROR.temp` file incase a user fault occurs, it will contain predetermined messages,
 If you want to use this feature, you must include a check on your end for the `ERROR.temp` file, and delete it

@@ -4,7 +4,7 @@
       "easy_data_to_use": 3,
       "minimum_titles": 3,
       "total_points": 10,
-      "use_debug_(ONLY_IF_YOU_DEVELOPED_THIS!)": true,
+      "use_debug_(ONLY_IF_YOU_DEVELOPED_THIS!)": false,
       "api": "",
       "username": "",
       "password": "",
