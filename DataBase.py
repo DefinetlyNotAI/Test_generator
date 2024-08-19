@@ -1225,10 +1225,8 @@ class DATABASE:
             self.__error("UKF")
 
 
-db_name = "Users.db"
-sql = SQL(db_name=db_name)
-log = LOG(filename="DataBase.log")
-
-# Initialize the database
-db = DATABASE()
-db.api()
+if __name__ == "__main__":
+    db_name = "Users.db"
+    sql = SQL(db_name=db_name)
+    log = LOG(filename="DataBase.log")
+    DATABASE().api()
