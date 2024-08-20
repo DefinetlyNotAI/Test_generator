@@ -1,5 +1,13 @@
 # Exam Generator Server Project Documentation
 
+<div align="center">
+    <a href="https://github.com/DefinetlyNotAI/Test_generator/issues"><img src="https://img.shields.io/github/issues/DefinetlyNotAI/Test_generator" alt="GitHub Issues"></a>
+    <a href="https://github.com/DefinetlyNotAI/Test_generator/tags"><img src="https://img.shields.io/github/v/tag/DefinetlyNotAI/Test_generator" alt="GitHub Tag"></a>
+    <a href="https://github.com/DefinetlyNotAI/Test_generator/graphs/commit-activity"><img src="https://img.shields.io/github/commit-activity/t/DefinetlyNotAI/Test_generator" alt="GitHub Commit Activity"></a>
+    <a href="https://github.com/DefinetlyNotAI/Test_generator/languages"><img src="https://img.shields.io/github/languages/count/DefinetlyNotAI/Test_generator" alt="GitHub Language Count"></a>
+    <a href="https://github.com/DefinetlyNotAI/Test_generator/actions"><img src="https://img.shields.io/github/check-runs/DefinetlyNotAI/Test_generator/main" alt="GitHub Branch Check Runs"></a>
+    <a href="https://github.com/DefinetlyNotAI/Test_generator"><img src="https://img.shields.io/github/repo-size/DefinetlyNotAI/Test_generator" alt="GitHub Repo Size"></a>
+</div>
 
 ## Table of Contents 🔍
 
