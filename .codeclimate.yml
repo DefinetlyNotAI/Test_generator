@@ -24,6 +24,6 @@ CONTRIBUTING.md
 CREDITS.md
 ReadMe.md
 SECURITY.md
-extra/DataBase/
+extra/
 *.csv
 *.json
