@@ -313,8 +313,3 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.toptal.com/developers/gitignore/api/windows,pycharm,python
-/users.db
-/max.time
-/passwords.txt
-/Exam.xlsx
-/secret

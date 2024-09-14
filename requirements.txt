@@ -1,3 +1,0 @@
-DateTime~=5.5
-colorlog~=6.8.2
-pandas~=2.2.2
